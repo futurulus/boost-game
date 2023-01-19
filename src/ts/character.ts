@@ -7,507 +7,507 @@ import { Obstacle } from "./obstacle";
 import { Theme } from "../../public/themes/theme";
 
 export class Character {
-	private ctx: CanvasRenderingContext2D;
-	private audio: Audio;
-	private theme: Theme;
-	private active: boolean;
-	private collider: Collider2d;
-	private players: Character[];
-	private obstacles: Obstacle[];
-	private player: number;
-	private size: number;
-	private position: coordinates;
-	private orientation: number;
-	private speed: number;
-	private maxVelocity: number;
-	private range: number;
-	private attackDuration: number;
-	private blockDuration: number;
-	private cooldownDuration: number;
-	private velocity: coordinates;
-	private obstacle: Obstacle;
-	private action: {
-		movingX: number;
-		movingY: number;
-		attacking: boolean;
-		blocking: boolean;
-		cooldown: boolean;
-	};
+  private ctx: CanvasRenderingContext2D;
+  private audio: Audio;
+  private theme: Theme;
+  private active: boolean;
+  private collider: Collider2d;
+  private players: Character[];
+  private obstacles: Obstacle[];
+  private player: number;
+  private size: number;
+  private position: coordinates;
+  private orientation: number;
+  private speed: number;
+  private maxVelocity: number;
+  private range: number;
+  private attackDuration: number;
+  private blockDuration: number;
+  private cooldownDuration: number;
+  private velocity: coordinates;
+  private obstacle: Obstacle;
+  private action: {
+    movingX: number;
+    movingY: number;
+    attacking: boolean;
+    blocking: boolean;
+    cooldown: boolean;
+  };
 
-	constructor(game: Game, player: number, theme: Theme) {
-		this.ctx = game.ctx;
-		this.audio = game.audio;
-		this.theme = theme;
-		this.active = false;
-		this.collider = game.collider;
-		this.players = game.players;
-		this.obstacles = game.obstacles;
-		this.player = player;
-		this.size = 100;
-		this.position = this.getInitialPosition();
-		this.orientation = 0;
-		this.speed = 1;
-		this.range = 150;
-		this.attackDuration = 200;
-		this.blockDuration = 300;
-		this.cooldownDuration = 800;
-		this.maxVelocity = 20;
-		this.velocity = {
-			x: 0,
-			y: 0,
-		};
-		this.obstacle = this.createObstacle(`player${this.player}`);
-		this.action = {
-			movingX: 0,
-			movingY: 0,
-			attacking: false,
-			blocking: false,
-			cooldown: false,
-		};
+  constructor(game: Game, player: number, theme: Theme) {
+    this.ctx = game.ctx;
+    this.audio = game.audio;
+    this.theme = theme;
+    this.active = false;
+    this.collider = game.collider;
+    this.players = game.players;
+    this.obstacles = game.obstacles;
+    this.player = player;
+    this.size = 100;
+    this.position = this.getInitialPosition();
+    this.orientation = 0;
+    this.speed = 1;
+    this.range = 150;
+    this.attackDuration = 200;
+    this.blockDuration = 300;
+    this.cooldownDuration = 800;
+    this.maxVelocity = 20;
+    this.velocity = {
+      x: 0,
+      y: 0,
+    };
+    this.obstacle = this.createObstacle(`player${this.player}`);
+    this.action = {
+      movingX: 0,
+      movingY: 0,
+      attacking: false,
+      blocking: false,
+      cooldown: false,
+    };
 
-		this.registerControls();
+    this.registerControls();
 
-		window.requestAnimationFrame(() => {
-			this.move();
-			this.turn();
-		});
+    window.requestAnimationFrame(() => {
+      this.move();
+      this.turn();
+    });
 
-		this.ctx.canvas.addEventListener("tick", (event: TickEvent) => {
-			this.onNextTick(event);
-		});
-	}
+    this.ctx.canvas.addEventListener("tick", (event: TickEvent) => {
+      this.onNextTick(event);
+    });
+  }
 
-	private getInitialPosition(): { x: number; y: number } {
-		if (this.player === 0) {
-			return { x: 50, y: 50 };
-		} else {
-			return {
-				x: this.ctx.canvas.width - 50 - this.size,
-				y: this.ctx.canvas.height - 50 - this.size,
-			};
-		}
-	}
+  private getInitialPosition(): { x: number; y: number } {
+    if (this.player === 0) {
+      return { x: 50, y: 50 };
+    } else {
+      return {
+        x: this.ctx.canvas.width - 50 - this.size,
+        y: this.ctx.canvas.height - 50 - this.size,
+      };
+    }
+  }
 
-	private createObstacle(id: string): Obstacle {
-		return new Obstacle(this.collider, this.obstacles, id, {
-			a: { x: this.position.x, y: this.position.y },
-			b: { x: this.position.x + this.size, y: this.position.y },
-			c: {
-				x: this.position.x + this.size,
-				y: this.position.y + this.size,
-			},
-			d: { x: this.position.x, y: this.position.y + this.size },
-		});
-	}
+  private createObstacle(id: string): Obstacle {
+    return new Obstacle(this.collider, this.obstacles, id, {
+      a: { x: this.position.x, y: this.position.y },
+      b: { x: this.position.x + this.size, y: this.position.y },
+      c: {
+        x: this.position.x + this.size,
+        y: this.position.y + this.size,
+      },
+      d: { x: this.position.x, y: this.position.y + this.size },
+    });
+  }
 
-	private registerControls(): void {
-		// move left
-		config.controls[this.player].left.forEach((key: string) => {
-			document.addEventListener("keydown", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key && event.repeat === false) {
-					this.action.movingX = -1;
-				}
-			});
-			document.addEventListener("keyup", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key) {
-					this.action.movingX = 0;
-				}
-			});
-		});
+  private registerControls(): void {
+    // move left
+    config.controls[this.player].left.forEach((key: string) => {
+      document.addEventListener("keydown", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key && event.repeat === false) {
+          this.action.movingX = -1;
+        }
+      });
+      document.addEventListener("keyup", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key) {
+          this.action.movingX = 0;
+        }
+      });
+    });
 
-		// move right
-		config.controls[this.player].right.forEach((key: string) => {
-			document.addEventListener("keydown", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key && event.repeat === false) {
-					this.action.movingX = 1;
-				}
-			});
-			document.addEventListener("keyup", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key) {
-					this.action.movingX = 0;
-				}
-			});
-		});
+    // move right
+    config.controls[this.player].right.forEach((key: string) => {
+      document.addEventListener("keydown", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key && event.repeat === false) {
+          this.action.movingX = 1;
+        }
+      });
+      document.addEventListener("keyup", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key) {
+          this.action.movingX = 0;
+        }
+      });
+    });
 
-		// move up
-		config.controls[this.player].up.forEach((key: string) => {
-			document.addEventListener("keydown", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key && event.repeat === false) {
-					this.action.movingY = -1;
-				}
-			});
-			document.addEventListener("keyup", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key) {
-					this.action.movingY = 0;
-				}
-			});
-		});
+    // move up
+    config.controls[this.player].up.forEach((key: string) => {
+      document.addEventListener("keydown", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key && event.repeat === false) {
+          this.action.movingY = -1;
+        }
+      });
+      document.addEventListener("keyup", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key) {
+          this.action.movingY = 0;
+        }
+      });
+    });
 
-		// move down
-		config.controls[this.player].down.forEach((key: string) => {
-			document.addEventListener("keydown", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key && event.repeat === false) {
-					this.action.movingY = 1;
-				}
-			});
-			document.addEventListener("keyup", (event: KeyboardEvent) => {
-				this.captureEvent(event);
-				if (event.code === key) {
-					this.action.movingY = 0;
-				}
-			});
-		});
+    // move down
+    config.controls[this.player].down.forEach((key: string) => {
+      document.addEventListener("keydown", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key && event.repeat === false) {
+          this.action.movingY = 1;
+        }
+      });
+      document.addEventListener("keyup", (event: KeyboardEvent) => {
+        this.captureEvent(event);
+        if (event.code === key) {
+          this.action.movingY = 0;
+        }
+      });
+    });
 
-		// move by stick
-		document.addEventListener("gamepadStickMove", (event: GamepadStickEvent) => {
-			if (event.detail.gamepadId !== this.player || event.detail.stickIndex !== 0) {
-				return;
-			}
+    // move by stick
+    document.addEventListener("gamepadStickMove", (event: GamepadStickEvent) => {
+      if (event.detail.gamepadId !== this.player || event.detail.stickIndex !== 0) {
+        return;
+      }
 
-			this.action.movingX = event.detail.stick.x;
-			this.action.movingY = event.detail.stick.y;
-		});
+      this.action.movingX = event.detail.stick.x;
+      this.action.movingY = event.detail.stick.y;
+    });
 
-		// attack
-		config.controls[this.player].attack.forEach((key: string) => {
-			document.addEventListener("keydown", (event: KeyboardEvent) => {
-				if (this.active && event.code === key && event.repeat === false && !this.action.cooldown) {
-					this.action.attacking = true;
-				}
-			});
+    // attack
+    config.controls[this.player].attack.forEach((key: string) => {
+      document.addEventListener("keydown", (event: KeyboardEvent) => {
+        if (this.active && event.code === key && event.repeat === false && !this.action.cooldown) {
+          this.action.attacking = true;
+        }
+      });
 
-			document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
-				if (
-					event.detail.gamepadId === this.player &&
-					event.detail.buttonIndex === config.gamepad.attack &&
-					!this.action.cooldown
-				) {
-					this.action.attacking = true;
-				}
-			});
-		});
+      document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
+        if (
+          event.detail.gamepadId === this.player &&
+          event.detail.buttonIndex === config.gamepad.attack &&
+          !this.action.cooldown
+        ) {
+          this.action.attacking = true;
+        }
+      });
+    });
 
-		// block
-		config.controls[this.player].block.forEach((key: string) => {
-			document.addEventListener("keydown", (event: KeyboardEvent) => {
-				if (this.active && event.code === key && event.repeat === false && !this.action.cooldown) {
-					this.action.blocking = true;
-				}
-			});
+    // block
+    config.controls[this.player].block.forEach((key: string) => {
+      document.addEventListener("keydown", (event: KeyboardEvent) => {
+        if (this.active && event.code === key && event.repeat === false && !this.action.cooldown) {
+          this.action.blocking = true;
+        }
+      });
 
-			document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
-				if (
-					event.detail.gamepadId === this.player &&
-					event.detail.buttonIndex === config.gamepad.block &&
-					!this.action.cooldown
-				) {
-					this.action.blocking = true;
-				}
-			});
-		});
-	}
+      document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
+        if (
+          event.detail.gamepadId === this.player &&
+          event.detail.buttonIndex === config.gamepad.block &&
+          !this.action.cooldown
+        ) {
+          this.action.blocking = true;
+        }
+      });
+    });
+  }
 
-	private captureEvent(event: KeyboardEvent): void {
-		if (
-			event.target === this.ctx.canvas &&
-			config.controls.find((x) => Object.values(x).some((y) => y.includes(event.code)))
-		) {
-			event.preventDefault();
-		}
-	}
+  private captureEvent(event: KeyboardEvent): void {
+    if (
+      event.target === this.ctx.canvas &&
+      config.controls.find((x) => Object.values(x).some((y) => y.includes(event.code)))
+    ) {
+      event.preventDefault();
+    }
+  }
 
-	public setActive(active: boolean): void {
-		this.reset();
-		this.active = active;
-	}
+  public setActive(active: boolean): void {
+    this.reset();
+    this.active = active;
+  }
 
-	private collide(): void {
-		const obstacles = this.obstacles.filter((obstacle) => obstacle.getId() !== this.obstacle.getId());
-		obstacles.forEach((obstacle) => {
-			const collision = this.obstacle.collidesWith(obstacle);
-			const friction = 0.8;
+  private collide(): void {
+    const obstacles = this.obstacles.filter((obstacle) => obstacle.getId() !== this.obstacle.getId());
+    obstacles.forEach((obstacle) => {
+      const collision = this.obstacle.collidesWith(obstacle);
+      const friction = 0.8;
 
-			if (!collision) {
-				return;
-			}
+      if (!collision) {
+        return;
+      }
 
-			this.velocity.x = (this.velocity.x + collision.overlapV.x * -1) * friction;
-			this.velocity.y = (this.velocity.y + collision.overlapV.y * -1) * friction;
+      this.velocity.x = (this.velocity.x + collision.overlapV.x * -1) * friction;
+      this.velocity.y = (this.velocity.y + collision.overlapV.y * -1) * friction;
 
-			this.audio.play(this.theme.config.collideAudio);
-		});
-	}
+      this.audio.play(this.theme.config.collideAudio);
+    });
+  }
 
-	private move(): void {
-		const { position, velocity, action } = this;
-		const newX = position.x + action.movingX * this.speed + velocity.x * this.speed;
-		const newY = position.y + action.movingY * this.speed + velocity.y * this.speed;
+  private move(): void {
+    const { position, velocity, action } = this;
+    const newX = position.x + action.movingX * this.speed + velocity.x * this.speed;
+    const newY = position.y + action.movingY * this.speed + velocity.y * this.speed;
 
-		position.x = newX;
-		position.y = newY;
+    position.x = newX;
+    position.y = newY;
 
-		if (position.x < 0) {
-			position.x = 0;
-		} else if (newX > this.ctx.canvas.width - this.size) {
-			position.x = this.ctx.canvas.width - this.size;
-		}
+    if (position.x < 0) {
+      position.x = 0;
+    } else if (newX > this.ctx.canvas.width - this.size) {
+      position.x = this.ctx.canvas.width - this.size;
+    }
 
-		if (position.y < 0) {
-			position.y = 0;
-		} else if (newY > this.ctx.canvas.height - this.size) {
-			position.y = this.ctx.canvas.height - this.size;
-		}
+    if (position.y < 0) {
+      position.y = 0;
+    } else if (newY > this.ctx.canvas.height - this.size) {
+      position.y = this.ctx.canvas.height - this.size;
+    }
 
-		this.obstacle.editObstacle({
-			a: { x: position.x, y: position.y },
-			b: { x: position.x + this.size, y: position.y },
-			c: { x: position.x + this.size, y: position.y + this.size },
-			d: { x: position.x, y: position.y + this.size },
-		});
+    this.obstacle.editObstacle({
+      a: { x: position.x, y: position.y },
+      b: { x: position.x + this.size, y: position.y },
+      c: { x: position.x + this.size, y: position.y + this.size },
+      d: { x: position.x, y: position.y + this.size },
+    });
 
-		this.velocity.x = clamp(
-			(action.movingX ? this.velocity.x + action.movingX : this.velocity.x * 0.8) * this.speed,
-			this.maxVelocity * -1,
-			this.maxVelocity
-		);
-		this.velocity.y = clamp(
-			(action.movingY ? this.velocity.y + action.movingY : this.velocity.y * 0.8) * this.speed,
-			this.maxVelocity * -1,
-			this.maxVelocity
-		);
-	}
+    this.velocity.x = clamp(
+      (action.movingX ? this.velocity.x + action.movingX : this.velocity.x * 0.8) * this.speed,
+      this.maxVelocity * -1,
+      this.maxVelocity
+    );
+    this.velocity.y = clamp(
+      (action.movingY ? this.velocity.y + action.movingY : this.velocity.y * 0.8) * this.speed,
+      this.maxVelocity * -1,
+      this.maxVelocity
+    );
+  }
 
-	private turn(): void {
-		const otherPlayer = this.player === 0 ? 1 : 0;
-		const orientationTarget: coordinates = this.players[otherPlayer]?.position || { x: 0, y: 0 };
-		const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
-		this.orientation = angle;
+  private turn(): void {
+    const otherPlayer = this.player === 0 ? 1 : 0;
+    const orientationTarget: coordinates = this.players[otherPlayer]?.position || { x: 0, y: 0 };
+    const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
+    this.orientation = angle;
 
-		const obstacle = {
-			a: { x: this.position.x, y: this.position.y },
-			b: { x: this.position.x + this.size, y: this.position.y },
-			c: {
-				x: this.position.x + this.size,
-				y: this.position.y + this.size,
-			},
-			d: { x: this.position.x, y: this.position.y + this.size },
-		};
+    const obstacle = {
+      a: { x: this.position.x, y: this.position.y },
+      b: { x: this.position.x + this.size, y: this.position.y },
+      c: {
+        x: this.position.x + this.size,
+        y: this.position.y + this.size,
+      },
+      d: { x: this.position.x, y: this.position.y + this.size },
+    };
 
-		const rotatedObstacle = rotate(
-			{
-				a: { x: this.position.x, y: this.position.y },
-				b: { x: this.position.x + this.size, y: this.position.y },
-				c: {
-					x: this.position.x + this.size,
-					y: this.position.y + this.size,
-				},
-				d: { x: this.position.x, y: this.position.y + this.size },
-			},
-			this.orientation
-		);
+    const rotatedObstacle = rotate(
+      {
+        a: { x: this.position.x, y: this.position.y },
+        b: { x: this.position.x + this.size, y: this.position.y },
+        c: {
+          x: this.position.x + this.size,
+          y: this.position.y + this.size,
+        },
+        d: { x: this.position.x, y: this.position.y + this.size },
+      },
+      this.orientation
+    );
 
-		this.obstacle.editObstacle(this.theme.config.turnSprites ? rotatedObstacle : obstacle);
-	}
+    this.obstacle.editObstacle(this.theme.config.turnSprites ? rotatedObstacle : obstacle);
+  }
 
-	private attack(): void {
-		if (!this.active || !this.action.attacking || this.action.cooldown) {
-			return;
-		}
+  private attack(): void {
+    if (!this.active || !this.action.attacking || this.action.cooldown) {
+      return;
+    }
 
-		this.action.cooldown = true;
+    this.action.cooldown = true;
 
-		// strike duration
-		window.setTimeout(() => {
-			this.action.attacking = false;
-		}, this.attackDuration);
+    // strike duration
+    window.setTimeout(() => {
+      this.action.attacking = false;
+    }, this.attackDuration);
 
-		// cooldown to next attack/block
-		window.setTimeout(() => {
-			this.action.cooldown = false;
-		}, this.cooldownDuration);
+    // cooldown to next attack/block
+    window.setTimeout(() => {
+      this.action.cooldown = false;
+    }, this.cooldownDuration);
 
-		this.strike();
-	}
+    this.strike();
+  }
 
-	private getWeaponPosition(): rectangle {
-		return rotate(
-			{
-				a: { x: this.position.x, y: this.position.y },
-				b: {
-					x: this.position.x + this.size + this.range,
-					y: this.position.y,
-				},
-				c: {
-					x: this.position.x + this.size + this.range,
-					y: this.position.y + this.size,
-				},
-				d: { x: this.position.x, y: this.position.y + this.size },
-			},
-			this.orientation,
-			{ x: this.range / 2, y: 0 } // todo: this works only by chance. need to refactor!
-		);
-	}
+  private getWeaponPosition(): rectangle {
+    return rotate(
+      {
+        a: { x: this.position.x, y: this.position.y },
+        b: {
+          x: this.position.x + this.size + this.range,
+          y: this.position.y,
+        },
+        c: {
+          x: this.position.x + this.size + this.range,
+          y: this.position.y + this.size,
+        },
+        d: { x: this.position.x, y: this.position.y + this.size },
+      },
+      this.orientation,
+      { x: this.range / 2, y: 0 } // todo: this works only by chance. need to refactor!
+    );
+  }
 
-	private strike(): void {
-		const otherPlayerId = this.player === 0 ? 1 : 0;
-		const otherPlayer: rectangle = this.players[otherPlayerId].obstacle?.getObject();
+  private strike(): void {
+    const otherPlayerId = this.player === 0 ? 1 : 0;
+    const otherPlayer: rectangle = this.players[otherPlayerId].obstacle?.getObject();
 
-		const blocked = this.players[otherPlayerId].action.blocking;
-		if (blocked) {
-			this.audio.play(this.theme.config.blockAudio);
-			return;
-		}
+    const blocked = this.players[otherPlayerId].action.blocking;
+    if (blocked) {
+      this.audio.play(this.theme.config.blockAudio);
+      return;
+    }
 
-		this.audio.play(this.theme.config.attackAudio);
+    this.audio.play(this.theme.config.attackAudio);
 
-		const otherPlayerPolygon = new Polygon(new Vector(0, 0), [
-			new Vector(otherPlayer.a.x, otherPlayer.a.y),
-			new Vector(otherPlayer.b.x, otherPlayer.b.y),
-			new Vector(otherPlayer.c.x, otherPlayer.c.y),
-			new Vector(otherPlayer.d.x, otherPlayer.d.y),
-		]);
+    const otherPlayerPolygon = new Polygon(new Vector(0, 0), [
+      new Vector(otherPlayer.a.x, otherPlayer.a.y),
+      new Vector(otherPlayer.b.x, otherPlayer.b.y),
+      new Vector(otherPlayer.c.x, otherPlayer.c.y),
+      new Vector(otherPlayer.d.x, otherPlayer.d.y),
+    ]);
 
-		const weaponPosition = this.getWeaponPosition();
-		const weaponPolygon = new Polygon(new Vector(0, 0), [
-			new Vector(weaponPosition.a.x, weaponPosition.a.y),
-			new Vector(weaponPosition.b.x, weaponPosition.b.y),
-			new Vector(weaponPosition.c.x, weaponPosition.c.y),
-			new Vector(weaponPosition.d.x, weaponPosition.d.y),
-		]);
+    const weaponPosition = this.getWeaponPosition();
+    const weaponPolygon = new Polygon(new Vector(0, 0), [
+      new Vector(weaponPosition.a.x, weaponPosition.a.y),
+      new Vector(weaponPosition.b.x, weaponPosition.b.y),
+      new Vector(weaponPosition.c.x, weaponPosition.c.y),
+      new Vector(weaponPosition.d.x, weaponPosition.d.y),
+    ]);
 
-		const hit = this.collider.testPolygonPolygon(weaponPolygon, otherPlayerPolygon) as boolean;
-		if (hit) {
-			this.finish();
-		}
-	}
+    const hit = this.collider.testPolygonPolygon(weaponPolygon, otherPlayerPolygon) as boolean;
+    if (hit) {
+      this.finish();
+    }
+  }
 
-	private finish(): void {
-		const finish: FinishEvent = new CustomEvent("countdown", {
-			detail: {
-				winner: this.player,
-			},
-		});
-		this.audio.play(this.theme.config.winAudio);
-		this.ctx.canvas.dispatchEvent(finish);
-	}
+  private finish(): void {
+    const finish: FinishEvent = new CustomEvent("countdown", {
+      detail: {
+        winner: this.player,
+      },
+    });
+    this.audio.play(this.theme.config.winAudio);
+    this.ctx.canvas.dispatchEvent(finish);
+  }
 
-	private block(): void {
-		if (!this.action.blocking || this.action.cooldown) {
-			return;
-		}
+  private block(): void {
+    if (!this.action.blocking || this.action.cooldown) {
+      return;
+    }
 
-		this.action.cooldown = true;
+    this.action.cooldown = true;
 
-		// block duration
-		window.setTimeout(() => {
-			this.action.blocking = false;
-		}, this.blockDuration);
+    // block duration
+    window.setTimeout(() => {
+      this.action.blocking = false;
+    }, this.blockDuration);
 
-		// cooldown to next attack/block
-		window.setTimeout(() => {
-			this.action.cooldown = false;
-		}, this.cooldownDuration);
-	}
+    // cooldown to next attack/block
+    window.setTimeout(() => {
+      this.action.cooldown = false;
+    }, this.cooldownDuration);
+  }
 
-	private reset(): void {
-		this.position = this.getInitialPosition();
-		this.velocity = { x: 0, y: 0 };
-		this.move();
-		window.requestAnimationFrame(() => {
-			this.turn();
-		});
-	}
+  private reset(): void {
+    this.position = this.getInitialPosition();
+    this.velocity = { x: 0, y: 0 };
+    this.move();
+    window.requestAnimationFrame(() => {
+      this.turn();
+    });
+  }
 
-	private getSprite(): Sprite {
-		const directions = ["w", "nw", "n", "ne", "e", "se", "s", "sw", "w"];
-		const zones = directions.map((z, i) => ({
-			zone: z,
-			start: Math.PI * -1 - Math.PI / 8 + (i * Math.PI) / 4,
-			end: Math.PI * -1 - Math.PI / 8 + ((i + 1) * Math.PI) / 4,
-		}));
+  private getSprite(): Sprite {
+    const directions = ["w", "nw", "n", "ne", "e", "se", "s", "sw", "w"];
+    const zones = directions.map((z, i) => ({
+      zone: z,
+      start: Math.PI * -1 - Math.PI / 8 + (i * Math.PI) / 4,
+      end: Math.PI * -1 - Math.PI / 8 + ((i + 1) * Math.PI) / 4,
+    }));
 
-		const direction = zones.find((zone) => this.orientation >= zone.start && this.orientation < zone.end);
+    const direction = zones.find((zone) => this.orientation >= zone.start && this.orientation < zone.end);
 
-		let action = "default";
-		if ((this.active && this.action.blocking) || this.action.blocking) {
-			action = "block";
-		} else if ((this.active && this.action.attacking) || this.action.attacking) {
-			action = "attack";
-		} else if (this.active && (this.action.movingX || this.action.movingY)) {
-			action = "move";
-		}
+    let action = "default";
+    if ((this.active && this.action.blocking) || this.action.blocking) {
+      action = "block";
+    } else if ((this.active && this.action.attacking) || this.action.attacking) {
+      action = "attack";
+    } else if (this.active && (this.action.movingX || this.action.movingY)) {
+      action = "move";
+    }
 
-		return this.theme.config.players[this.player][action][direction.zone];
-	}
+    return this.theme.config.players[this.player][action][direction.zone];
+  }
 
-	private draw(frameCount: number): void {
-		this.ctx.save();
-		this.ctx.translate(Math.round(this.position.x + this.size / 2), Math.round(this.position.y + this.size / 2));
+  private draw(frameCount: number): void {
+    this.ctx.save();
+    this.ctx.translate(Math.round(this.position.x + this.size / 2), Math.round(this.position.y + this.size / 2));
 
-		this.theme.config.turnSprites && this.ctx.rotate(this.orientation);
+    this.theme.config.turnSprites && this.ctx.rotate(this.orientation);
 
-		/*
+    /*
         // uncomment for debugging
-		// body
-		this.ctx.shadowColor = this.theme.config.colors[this.player];
-		this.ctx.shadowBlur = 10;
-		this.ctx.fillStyle = this.theme.config.colors[this.player];
-		this.ctx.fillRect(this.size / -2, this.size / -2, this.size, this.size);
+    // body
+    this.ctx.shadowColor = this.theme.config.colors[this.player];
+    this.ctx.shadowBlur = 10;
+    this.ctx.fillStyle = this.theme.config.colors[this.player];
+    this.ctx.fillRect(this.size / -2, this.size / -2, this.size, this.size);
 
-		// face
-		this.ctx.shadowColor = "#ff00ff";
-		this.ctx.shadowBlur = 8;
-		this.ctx.fillStyle = "#ff00ff";
-		this.ctx.fillRect(this.size / 2 - 20, this.size / -2, 20, this.size);
+    // face
+    this.ctx.shadowColor = "#ff00ff";
+    this.ctx.shadowBlur = 8;
+    this.ctx.fillStyle = "#ff00ff";
+    this.ctx.fillRect(this.size / 2 - 20, this.size / -2, 20, this.size);
         */
 
-		// character
-		this.theme.config.shader && this.theme.config.shader(this.ctx);
-		this.theme.drawSprite(this.ctx, this.getSprite().name, { x: this.size / -2, y: this.size / -2 }, frameCount);
+    // character
+    this.theme.config.shader && this.theme.config.shader(this.ctx);
+    this.theme.drawSprite(this.ctx, this.getSprite().name, { x: this.size / -2, y: this.size / -2 }, frameCount);
 
-		this.ctx.restore();
+    this.ctx.restore();
 
-		/*
+    /*
         // uncomment for debugging
-		// draw weapon in absolute space
-		if (this.action.attacking && this.active) {
-			const weaponPosition = this.getWeaponPosition();
-			this.ctx.fillStyle = "#ff0000";
-			this.ctx.moveTo(weaponPosition.a.x, weaponPosition.a.y);
-			this.ctx.beginPath();
-			this.ctx.lineTo(weaponPosition.b.x, weaponPosition.b.y);
-			this.ctx.lineTo(weaponPosition.c.x, weaponPosition.c.y);
-			this.ctx.lineTo(weaponPosition.d.x, weaponPosition.d.y);
-			this.ctx.lineTo(weaponPosition.a.x, weaponPosition.a.y);
-			this.ctx.closePath();
-			this.ctx.fill();
-		}
+    // draw weapon in absolute space
+    if (this.action.attacking && this.active) {
+      const weaponPosition = this.getWeaponPosition();
+      this.ctx.fillStyle = "#ff0000";
+      this.ctx.moveTo(weaponPosition.a.x, weaponPosition.a.y);
+      this.ctx.beginPath();
+      this.ctx.lineTo(weaponPosition.b.x, weaponPosition.b.y);
+      this.ctx.lineTo(weaponPosition.c.x, weaponPosition.c.y);
+      this.ctx.lineTo(weaponPosition.d.x, weaponPosition.d.y);
+      this.ctx.lineTo(weaponPosition.a.x, weaponPosition.a.y);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
         */
-	}
+  }
 
-	private executeCharacterActions(): void {
-		if (this.active) {
-			this.move();
-			this.turn();
-			this.collide();
-			this.attack();
-			this.block();
-		}
-	}
+  private executeCharacterActions(): void {
+    if (this.active) {
+      this.move();
+      this.turn();
+      this.collide();
+      this.attack();
+      this.block();
+    }
+  }
 
-	private onNextTick(tick: TickEvent): void {
-		this.executeCharacterActions();
+  private onNextTick(tick: TickEvent): void {
+    this.executeCharacterActions();
 
-		for (let i = 0; i < tick.detail.frameSkip; i++) {
-			this.executeCharacterActions();
-		}
-		this.draw(tick.detail.frameCount);
-	}
+    for (let i = 0; i < tick.detail.frameSkip; i++) {
+      this.executeCharacterActions();
+    }
+    this.draw(tick.detail.frameCount);
+  }
 }
