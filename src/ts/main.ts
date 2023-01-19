@@ -17,7 +17,6 @@ export class Game {
   ctx: CanvasRenderingContext2D;
   collider: Collider2d;
   obstacles: Obstacle[];
-  scene: Scene;
   players: Character[];
   gamepadAdapter: GamepadAdapter;
   countdown: Countdown;
@@ -36,7 +35,6 @@ export class Game {
     this.collider = new Collider2d();
     this.theme = new Theme(this.ctx, themes.RetroKnights);
     this.obstacles = [];
-    this.scene = new Scene(this, this.theme);
     this.players = [];
     this.audio = new Audio(this.theme);
 

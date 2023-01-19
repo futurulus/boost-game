@@ -1,10 +1,10 @@
-import { rectangle } from "./types";
+import { Rectangle } from "./types";
 
 export function rotate(
-  object: rectangle,
+  object: Rectangle,
   angle: number,
   offset = { x: 0, y: 0 }
-): rectangle {
+): Rectangle {
   const { a, b, c, d } = object;
   const center = {
     x: (a.x + b.x + c.x + d.x) / 4 - offset.x,

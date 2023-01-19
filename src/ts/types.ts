@@ -1,18 +1,24 @@
-export type coordinates = {
+export type Vec2 = {
   x: number;
   y: number;
 };
 
-export type dimensions = {
+export type Vec3 = {
+  x: number;
+  y: number;
+  t: number;
+};
+
+export type Dimensions = {
   width: number;
   height: number;
 };
 
-export type rectangle = {
-  a: coordinates;
-  b: coordinates;
-  c: coordinates;
-  d: coordinates;
+export type Rectangle = {
+  a: Vec2;
+  b: Vec2;
+  c: Vec2;
+  d: Vec2;
 };
 
 export interface TickEvent extends Event {
@@ -40,7 +46,7 @@ export interface GamepadStickEvent extends Event {
   readonly detail?: {
     gamepadId: number;
     stickIndex: number;
-    stick: coordinates;
+    stick: Vec2;
   };
 }
 
@@ -54,7 +60,7 @@ export type Sprite = {
   name: string;
   images: string[];
   animationSpeed: number; // use next image every N frames, max 60
-  offset: coordinates;
+  offset: Vec2;
 };
 
 export type SpriteSet = {
@@ -72,7 +78,7 @@ export type ThemeConfig = {
   name: string; // has to match folder name
   scene: Sprite; // scene image, 1920x1080
   colors: string[];
-  obstacles: rectangle[]; // outline obsacles within the scene
+  obstacles: Rectangle[]; // outline obsacles within the scene
   players: {
     default: SpriteSet; // player when standing still, 100x100
     move: SpriteSet; // player when moving, 100x100

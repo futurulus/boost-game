@@ -1,4 +1,4 @@
-import { coordinates, LoadingEvent, Sprite, ThemeConfig } from "../../src/ts/types";
+import { Vec2, LoadingEvent, Sprite, ThemeConfig } from "../../src/ts/types";
 
 export class Theme {
   private ctx: CanvasRenderingContext2D;
@@ -84,7 +84,7 @@ export class Theme {
     }
   }
 
-  public drawSprite(ctx: CanvasRenderingContext2D, name: string, pos: coordinates, frameCount = 0) {
+  public drawSprite(ctx: CanvasRenderingContext2D, name: string, pos: Vec2, frameCount = 0) {
     const sprite = this.sprites.find((x) => x.name === name);
     if (!sprite) {
       return;

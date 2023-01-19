@@ -1,4 +1,4 @@
-import { coordinates, GamepadButtonEvent, GamepadStickEvent } from "./types";
+import { Vec2, GamepadButtonEvent, GamepadStickEvent } from "./types";
 
 export class GamepadAdapter {
   ctx: CanvasRenderingContext2D;
@@ -107,7 +107,7 @@ export class GamepadAdapter {
     document.dispatchEvent(GamepadButtonUp);
   }
 
-  moveStick(gamepad: number, stickIndex: number, stick: coordinates) {
+  moveStick(gamepad: number, stickIndex: number, stick: Vec2) {
     // add deadzone to prevent drift
     const coords = {
       x: Math.abs(stick.x) < 0.2 ? 0 : stick.x,

@@ -5,7 +5,7 @@ import { Game } from "./main";
 import { clamp, rotate } from "./util";
 import { Obstacle } from "./obstacle";
 import { Theme } from "../../public/themes/theme";
-import { coordinates, FinishEvent, GamepadButtonEvent, GamepadStickEvent, rectangle, Sprite, TickEvent } from "./types";
+import { Vec2, FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Sprite, TickEvent } from "./types";
 
 export class Character {
   private ctx: CanvasRenderingContext2D;
@@ -17,7 +17,7 @@ export class Character {
   private obstacles: Obstacle[];
   private player: number;
   private size: number;
-  private position: coordinates;
+  private position: Vec2;
   private orientation: number;
   private speed: number;
   private maxVelocity: number;
@@ -25,7 +25,7 @@ export class Character {
   private attackDuration: number;
   private blockDuration: number;
   private cooldownDuration: number;
-  private velocity: coordinates;
+  private velocity: Vec2;
   private obstacle: Obstacle;
   private action: {
     movingX: number;
@@ -287,7 +287,7 @@ export class Character {
 
   private turn(): void {
     const otherPlayer = this.player === 0 ? 1 : 0;
-    const orientationTarget: coordinates = this.players[otherPlayer]?.position || { x: 0, y: 0 };
+    const orientationTarget: Vec2 = this.players[otherPlayer]?.position || { x: 0, y: 0 };
     const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
     this.orientation = angle;
 
@@ -337,7 +337,7 @@ export class Character {
     this.strike();
   }
 
-  private getWeaponPosition(): rectangle {
+  private getWeaponPosition(): Rectangle {
     return rotate(
       {
         a: { x: this.position.x, y: this.position.y },
@@ -358,7 +358,7 @@ export class Character {
 
   private strike(): void {
     const otherPlayerId = this.player === 0 ? 1 : 0;
-    const otherPlayer: rectangle = this.players[otherPlayerId].obstacle?.getObject();
+    const otherPlayer: Rectangle = this.players[otherPlayerId].obstacle?.getObject();
 
     const blocked = this.players[otherPlayerId].action.blocking;
     if (blocked) {
@@ -452,10 +452,8 @@ export class Character {
     this.ctx.save();
     this.ctx.translate(Math.round(this.position.x + this.size / 2), Math.round(this.position.y + this.size / 2));
 
-    this.theme.config.turnSprites && this.ctx.rotate(this.orientation);
+    this.ctx.rotate(this.orientation);
 
-    /*
-        // uncomment for debugging
     // body
     this.ctx.shadowColor = this.theme.config.colors[this.player];
     this.ctx.shadowBlur = 10;
@@ -467,16 +465,9 @@ export class Character {
     this.ctx.shadowBlur = 8;
     this.ctx.fillStyle = "#ff00ff";
     this.ctx.fillRect(this.size / 2 - 20, this.size / -2, 20, this.size);
-        */
-
-    // character
-    this.theme.config.shader && this.theme.config.shader(this.ctx);
-    this.theme.drawSprite(this.ctx, this.getSprite().name, { x: this.size / -2, y: this.size / -2 }, frameCount);
 
     this.ctx.restore();
 
-    /*
-        // uncomment for debugging
     // draw weapon in absolute space
     if (this.action.attacking && this.active) {
       const weaponPosition = this.getWeaponPosition();
@@ -490,7 +481,6 @@ export class Character {
       this.ctx.closePath();
       this.ctx.fill();
     }
-        */
   }
 
   private executeCharacterActions(): void {

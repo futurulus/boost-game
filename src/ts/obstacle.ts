@@ -1,18 +1,18 @@
 import { Vector, Polygon, Collider2d } from "collider2d";
 import CollisionDetails from "collider2d/build/collision_details";
-import { rectangle } from "./types";
+import { Rectangle } from "./types";
 
 export class Obstacle {
   private collider: Collider2d;
   private obstacles: Obstacle[];
   private id: string;
-  private object: rectangle;
+  private object: Rectangle;
 
   constructor(
     collider: Collider2d,
     obstacles: Obstacle[],
     id: string,
-    object: rectangle
+    object: Rectangle
   ) {
     this.collider = collider;
     this.obstacles = obstacles;
@@ -26,11 +26,11 @@ export class Obstacle {
     return this.id;
   }
 
-  public getObject(): rectangle {
+  public getObject(): Rectangle {
     return this.object;
   }
 
-  public editObstacle(payload: rectangle) {
+  public editObstacle(payload: Rectangle) {
     this.object = payload;
   }
 
