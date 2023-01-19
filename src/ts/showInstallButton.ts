@@ -1,3 +1,5 @@
+import { BeforeInstallPromptEvent } from "./types";
+
 export const showInstallButton = (channel: BroadcastChannel) => {
   const button = document.querySelector("[data-type='pwa-install-button']");
   if (!button) {
@@ -16,7 +18,7 @@ export const showInstallButton = (channel: BroadcastChannel) => {
   });
 
   button.addEventListener("click", (e) => {
-    deferredPrompt.prompt();
+    deferredPrompt?.prompt();
   });
 
   window.addEventListener("appinstalled", () => {

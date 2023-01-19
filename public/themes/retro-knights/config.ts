@@ -1,4 +1,6 @@
-export const RetroKnights: themeConfig = {
+import { ThemeConfig } from "../../../src/ts/types";
+
+export const RetroKnights: ThemeConfig = {
 	name: "retro-knights",
 	colors: ["#368dc8", "#d3b447"],
 	scene: {

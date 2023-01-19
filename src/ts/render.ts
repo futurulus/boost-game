@@ -1,4 +1,5 @@
 import { Theme } from "../../public/themes/theme";
+import { TickEvent } from "./types";
 import { clamp } from "./util";
 
 export class Renderer {

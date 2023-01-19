@@ -1,3 +1,5 @@
+import { rectangle } from "./types";
+
 export function rotate(
   object: rectangle,
   angle: number,
@@ -32,19 +34,18 @@ export function rotate(
   return { a: rotatedA, b: rotatedB, c: rotatedC, d: rotatedD };
 }
 
-export function clamp(num, min, max) {
+export function clamp(num: number, min: number, max: number) {
   return Math.min(Math.max(num, min), max);
 }
 
 export function hexToRGB(hex: string): { r: number; g: number; b: number } {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : null;
+  if (result === null) throw new Error(`Invalid hex color ${JSON.stringify(hex)}`);
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+  };
 }
 
 export function getVolume(): number {

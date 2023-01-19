@@ -1,10 +1,11 @@
 import { themes } from "../../public/themes";
+import { SpriteSet, ThemeConfig } from "./types";
 
 export const getGameAssets = (): string[] => {
-  const assets = [];
+  const assets: string[] = [];
 
   Object.keys(themes).forEach((theme) => {
-    const themeConfig = themes[theme] as themeConfig;
+    const themeConfig = themes[theme] as ThemeConfig;
 
     // add player sprites
     ["p1", "p2"].forEach((player, pi) => {

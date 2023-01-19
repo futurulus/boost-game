@@ -1,5 +1,6 @@
 import { Vector, Polygon, Collider2d } from "collider2d";
 import CollisionDetails from "collider2d/build/collision_details";
+import { rectangle } from "./types";
 
 export class Obstacle {
   private collider: Collider2d;

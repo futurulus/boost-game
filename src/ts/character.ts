@@ -5,6 +5,7 @@ import { Game } from "./main";
 import { clamp, rotate } from "./util";
 import { Obstacle } from "./obstacle";
 import { Theme } from "../../public/themes/theme";
+import { coordinates, FinishEvent, GamepadButtonEvent, GamepadStickEvent, rectangle, Sprite, TickEvent } from "./types";
 
 export class Character {
   private ctx: CanvasRenderingContext2D;
@@ -167,7 +168,7 @@ export class Character {
 
     // move by stick
     document.addEventListener("gamepadStickMove", (event: GamepadStickEvent) => {
-      if (event.detail.gamepadId !== this.player || event.detail.stickIndex !== 0) {
+      if (event.detail?.gamepadId !== this.player || event.detail?.stickIndex !== 0) {
         return;
       }
 
@@ -185,7 +186,7 @@ export class Character {
 
       document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
         if (
-          event.detail.gamepadId === this.player &&
+          event.detail?.gamepadId === this.player &&
           event.detail.buttonIndex === config.gamepad.attack &&
           !this.action.cooldown
         ) {
@@ -204,7 +205,7 @@ export class Character {
 
       document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
         if (
-          event.detail.gamepadId === this.player &&
+          event.detail?.gamepadId === this.player &&
           event.detail.buttonIndex === config.gamepad.block &&
           !this.action.cooldown
         ) {
@@ -444,7 +445,7 @@ export class Character {
       action = "move";
     }
 
-    return this.theme.config.players[this.player][action][direction.zone];
+    return this.theme.config.players[this.player][action][direction?.zone];
   }
 
   private draw(frameCount: number): void {
@@ -505,9 +506,11 @@ export class Character {
   private onNextTick(tick: TickEvent): void {
     this.executeCharacterActions();
 
-    for (let i = 0; i < tick.detail.frameSkip; i++) {
-      this.executeCharacterActions();
+    if (tick.detail !== undefined) {
+      for (let i = 0; i < tick.detail.frameSkip; i++) {
+        this.executeCharacterActions();
+      }
+      this.draw(tick.detail.frameCount);
     }
-    this.draw(tick.detail.frameCount);
   }
 }

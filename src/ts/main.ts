@@ -11,6 +11,7 @@ import { themes } from "../../public/themes/index";
 import { Theme } from "../../public/themes/theme";
 import { registerServiceWorker } from "./registerServiceWorker";
 import { showInstallButton } from "./showInstallButton";
+import { FinishEvent, LoadingEvent } from "./types";
 
 export class Game {
   ctx: CanvasRenderingContext2D;
@@ -27,7 +28,10 @@ export class Game {
 
   constructor() {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-    this.ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
+    if (ctx === null) throw new Error("Can't get context from canvas!");
+
+    this.ctx = ctx;
     this.showLoader();
     this.collider = new Collider2d();
     this.theme = new Theme(this.ctx, themes.RetroKnights);
@@ -53,7 +57,9 @@ export class Game {
 
   showLoader() {
     const loader = document.querySelector(".loader");
+    if (loader === null) return;
     const progress = loader.querySelector("progress");
+    if (progress === null) return;
     loader.removeAttribute("hidden");
     this.ctx.canvas.addEventListener("loadingEvent", ((e: LoadingEvent) => {
       progress.value = e.detail.progress;

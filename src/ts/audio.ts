@@ -1,4 +1,5 @@
 import { Theme } from "./../../public/themes/theme";
+import { SoundLibrary } from "./types";
 
 export class Audio {
   private theme: Theme;

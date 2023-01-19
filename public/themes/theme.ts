@@ -1,11 +1,13 @@
+import { coordinates, LoadingEvent, Sprite, ThemeConfig } from "../../src/ts/types";
+
 export class Theme {
 	private ctx: CanvasRenderingContext2D;
-	public config: themeConfig;
+	public config: ThemeConfig;
 	public assetsLoaded: boolean = false;
 	private images: HTMLImageElement[] = [];
 	private sprites: Sprite[] = [];
 
-	constructor(ctx: CanvasRenderingContext2D, config: themeConfig) {
+	constructor(ctx: CanvasRenderingContext2D, config: ThemeConfig) {
 		this.ctx = ctx;
 		this.config = config;
 

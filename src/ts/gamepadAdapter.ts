@@ -1,11 +1,13 @@
+import { coordinates, GamepadButtonEvent, GamepadStickEvent } from "./types";
+
 export class GamepadAdapter {
   ctx: CanvasRenderingContext2D;
-  gamepads: {
+  gamepads: ({
     buttons: {
       pressed: boolean;
       value: number;
     }[];
-  }[];
+  } | null)[];
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
@@ -24,7 +26,7 @@ export class GamepadAdapter {
         buttons: gp?.buttons.map((b) => ({
           pressed: b.pressed,
           value: b.value,
-        })),
+        })) ?? [],
       };
     });
   }
@@ -68,8 +70,11 @@ export class GamepadAdapter {
   }
 
   pressButton(gamepad: number, buttonIndex: number, button: GamepadButton) {
-    this.gamepads[gamepad].buttons[buttonIndex].value = button.value;
-    this.gamepads[gamepad].buttons[buttonIndex].pressed = button.pressed;
+    const gamepadState = this.gamepads[gamepad];
+    if (gamepadState === null) return;
+
+    gamepadState.buttons[buttonIndex].value = button.value;
+    gamepadState.buttons[buttonIndex].pressed = button.pressed;
     const GamepadButtonDown: GamepadButtonEvent = new CustomEvent(
       "gamepadButtonDown",
       {
@@ -84,8 +89,11 @@ export class GamepadAdapter {
   }
 
   releaseButton(gamepad: number, buttonIndex: number, button: GamepadButton) {
-    this.gamepads[gamepad].buttons[buttonIndex].value = button.value;
-    this.gamepads[gamepad].buttons[buttonIndex].pressed = button.pressed;
+    const gamepadState = this.gamepads[gamepad];
+    if (gamepadState === null) return;
+
+    gamepadState.buttons[buttonIndex].value = button.value;
+    gamepadState.buttons[buttonIndex].pressed = button.pressed;
     const GamepadButtonUp: GamepadButtonEvent = new CustomEvent(
       "gamepadButtonUp",
       {

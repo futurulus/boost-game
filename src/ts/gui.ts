@@ -1,4 +1,3 @@
-import config from "../../config.json" assert { type: "json" };
 import { Theme } from "../../public/themes/theme";
 
 export class Gui {

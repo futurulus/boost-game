@@ -1,34 +1,34 @@
-declare type coordinates = {
+export type coordinates = {
   x: number;
   y: number;
 };
 
-declare type dimensions = {
+export type dimensions = {
   width: number;
   height: number;
 };
 
-declare type rectangle = {
+export type rectangle = {
   a: coordinates;
   b: coordinates;
   c: coordinates;
   d: coordinates;
 };
 
-declare interface TickEvent extends Event {
+export interface TickEvent extends Event {
   readonly detail?: {
     frameCount: number;
     frameSkip: number;
   };
 }
 
-declare interface FinishEvent extends Event {
+export interface FinishEvent extends Event {
   readonly detail?: {
     winner: number;
   };
 }
 
-declare interface GamepadButtonEvent extends Event {
+export interface GamepadButtonEvent extends Event {
   readonly detail?: {
     gamepadId: number;
     buttonIndex: number;
@@ -36,7 +36,7 @@ declare interface GamepadButtonEvent extends Event {
   };
 }
 
-declare interface GamepadStickEvent extends Event {
+export interface GamepadStickEvent extends Event {
   readonly detail?: {
     gamepadId: number;
     stickIndex: number;
@@ -44,20 +44,20 @@ declare interface GamepadStickEvent extends Event {
   };
 }
 
-declare interface LoadingEvent extends Event {
+export interface LoadingEvent extends Event {
   readonly detail: {
     progress: number;
   };
 }
 
-declare type Sprite = {
+export type Sprite = {
   name: string;
   images: string[];
   animationSpeed: number; // use next image every N frames, max 60
   offset: coordinates;
 };
 
-declare type SpriteSet = {
+export type SpriteSet = {
   n: Sprite; // sprite facing north
   ne: Sprite; // sprite facing north-east
   e: Sprite; // etc
@@ -68,7 +68,7 @@ declare type SpriteSet = {
   nw: Sprite;
 };
 
-declare type themeConfig = {
+export type ThemeConfig = {
   name: string; // has to match folder name
   scene: Sprite; // scene image, 1920x1080
   colors: string[];
@@ -88,7 +88,7 @@ declare type themeConfig = {
   winAudio: string; // link to win audio
 };
 
-interface BeforeInstallPromptEvent extends Event {
+export interface BeforeInstallPromptEvent extends Event {
   /**
    * Returns an array of DOMString items containing the platforms on which the event was dispatched.
    * This is provided for user agents that want to present a choice of versions to the user such as,
@@ -112,11 +112,11 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-interface Window {
+export interface Window {
   webkitAudioContext: typeof AudioContext;
 }
 
-type SoundLibrary = {
+export type SoundLibrary = {
   [key: string]: {
     playing: boolean;
   };

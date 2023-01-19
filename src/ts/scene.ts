@@ -1,6 +1,7 @@
 import { Theme } from "../../public/themes/theme";
 import { Game } from "./main";
 import { Obstacle } from "./obstacle";
+import { TickEvent } from "./types";
 
 export class Scene {
   private ctx: CanvasRenderingContext2D;
@@ -25,7 +26,9 @@ export class Scene {
     );
 
     this.ctx.canvas.addEventListener("tick", (event: TickEvent) => {
-      this.draw(event.detail.frameCount);
+      if (event.detail !== undefined) {
+        this.draw(event.detail.frameCount);
+      }
     });
   }
 
