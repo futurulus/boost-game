@@ -12,6 +12,7 @@ import { registerServiceWorker } from "./registerServiceWorker";
 import { showInstallButton } from "./showInstallButton";
 import { FinishEvent, LoadingEvent } from "./types";
 import { Entity } from "./entity";
+import { Opponent } from "./entities/opponent";
 
 export class Game {
   ctx: CanvasRenderingContext2D;
@@ -39,7 +40,7 @@ export class Game {
     this.audio = new Audio(this.theme);
 
     this.player = new Player(this, this.theme);
-    const player2 = new Entity(this, 'player2', this.theme);
+    const player2 = new Opponent(this, 'player2', this.theme);
     this.entities.push(player2);
 
     this.gamepadAdapter = new GamepadAdapter(this.ctx);
