@@ -1,7 +1,7 @@
 import { Audio } from "./audio";
 import { Countdown } from "./countdown";
 import { Obstacle } from "./obstacle";
-import { Character } from "./character";
+import { Player } from "./player";
 import { Renderer } from "./render";
 import { Collider2d } from "collider2d";
 import { Gui } from "./gui";
@@ -11,12 +11,14 @@ import { Theme } from "../../public/themes/theme";
 import { registerServiceWorker } from "./registerServiceWorker";
 import { showInstallButton } from "./showInstallButton";
 import { FinishEvent, LoadingEvent } from "./types";
+import { Entity } from "./entity";
 
 export class Game {
   ctx: CanvasRenderingContext2D;
   collider: Collider2d;
   obstacles: Obstacle[];
-  players: Character[];
+  player: Player;
+  entities: Entity[];
   gamepadAdapter: GamepadAdapter;
   countdown: Countdown;
   gui: Gui;
@@ -33,12 +35,12 @@ export class Game {
     this.collider = new Collider2d();
     this.theme = new Theme(this.ctx, themes.RetroKnights);
     this.obstacles = [];
-    this.players = [];
+    this.entities = [];
     this.audio = new Audio(this.theme);
 
-    const player1 = new Character(this, 0, this.theme);
-    const player2 = new Character(this, 1, this.theme);
-    this.players.push(player1, player2);
+    this.player = new Player(this, this.theme);
+    const player2 = new Entity(this, 'player2', this.theme);
+    this.entities.push(player2);
 
     this.gamepadAdapter = new GamepadAdapter(this.ctx);
 
@@ -86,8 +88,9 @@ export class Game {
   }
 
   togglePlayers(active: boolean) {
-    this.players.forEach((player) => {
-      player.setActive(active);
+    this.player.setActive(active);
+    this.entities.forEach((entity) => {
+      entity.setActive(active);
     });
   }
 

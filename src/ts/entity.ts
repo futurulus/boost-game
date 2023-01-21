@@ -6,18 +6,30 @@ import { clamp, rotate } from "./util";
 import { Obstacle } from "./obstacle";
 import { Theme } from "../../public/themes/theme";
 import { Vec2, FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Sprite, TickEvent } from "./types";
+import { Player } from "./player";
 
-export class Character {
+export class Entity {
+  position: Vec2;
+  obstacle: Obstacle;
+  action: {
+    movingX: number;
+    movingY: number;
+    attacking: boolean;
+    blocking: boolean;
+    cooldown: boolean;
+  };
+
+  private id: string;
   private ctx: CanvasRenderingContext2D;
   private audio: Audio;
   private theme: Theme;
   private active: boolean;
   private collider: Collider2d;
-  private players: Character[];
+  private playerNum: number;
+  private player: Player;
   private obstacles: Obstacle[];
-  private player: number;
+  private entities: Entity[];
   private size: number;
-  private position: Vec2;
   private orientation: number;
   private speed: number;
   private maxVelocity: number;
@@ -26,24 +38,18 @@ export class Character {
   private blockDuration: number;
   private cooldownDuration: number;
   private velocity: Vec2;
-  private obstacle: Obstacle;
-  private action: {
-    movingX: number;
-    movingY: number;
-    attacking: boolean;
-    blocking: boolean;
-    cooldown: boolean;
-  };
 
-  constructor(game: Game, player: number, theme: Theme) {
+  constructor(game: Game, id: string, theme: Theme) {
+    this.id = id;
     this.ctx = game.ctx;
     this.audio = game.audio;
     this.theme = theme;
     this.active = false;
     this.collider = game.collider;
-    this.players = game.players;
+    this.playerNum = 1;
+    this.player = game.player;
     this.obstacles = game.obstacles;
-    this.player = player;
+    this.entities = game.entities;
     this.size = 100;
     this.position = this.getInitialPosition();
     this.orientation = 0;
@@ -57,7 +63,7 @@ export class Character {
       x: 0,
       y: 0,
     };
-    this.obstacle = this.createObstacle(`player${this.player}`);
+    this.obstacle = this.createObstacle(this.id);
     this.action = {
       movingX: 0,
       movingY: 0,
@@ -79,14 +85,10 @@ export class Character {
   }
 
   private getInitialPosition(): { x: number; y: number } {
-    if (this.player === 0) {
-      return { x: 50, y: 50 };
-    } else {
-      return {
-        x: this.ctx.canvas.width - 50 - this.size,
-        y: this.ctx.canvas.height - 50 - this.size,
-      };
-    }
+    return {
+      x: this.ctx.canvas.width - 50 - this.size,
+      y: this.ctx.canvas.height - 50 - this.size,
+    };
   }
 
   private createObstacle(id: string): Obstacle {
@@ -103,7 +105,7 @@ export class Character {
 
   private registerControls(): void {
     // move left
-    config.controls[this.player].left.forEach((key: string) => {
+    config.controls[this.playerNum].left.forEach((key: string) => {
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         this.captureEvent(event);
         if (event.code === key && event.repeat === false) {
@@ -119,7 +121,7 @@ export class Character {
     });
 
     // move right
-    config.controls[this.player].right.forEach((key: string) => {
+    config.controls[this.playerNum].right.forEach((key: string) => {
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         this.captureEvent(event);
         if (event.code === key && event.repeat === false) {
@@ -135,7 +137,7 @@ export class Character {
     });
 
     // move up
-    config.controls[this.player].up.forEach((key: string) => {
+    config.controls[this.playerNum].up.forEach((key: string) => {
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         this.captureEvent(event);
         if (event.code === key && event.repeat === false) {
@@ -151,7 +153,7 @@ export class Character {
     });
 
     // move down
-    config.controls[this.player].down.forEach((key: string) => {
+    config.controls[this.playerNum].down.forEach((key: string) => {
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         this.captureEvent(event);
         if (event.code === key && event.repeat === false) {
@@ -168,7 +170,7 @@ export class Character {
 
     // move by stick
     document.addEventListener("gamepadStickMove", (event: GamepadStickEvent) => {
-      if (event.detail?.gamepadId !== this.player || event.detail?.stickIndex !== 0) {
+      if (event.detail?.gamepadId !== this.playerNum || event.detail?.stickIndex !== 0) {
         return;
       }
 
@@ -177,7 +179,7 @@ export class Character {
     });
 
     // attack
-    config.controls[this.player].attack.forEach((key: string) => {
+    config.controls[this.playerNum].attack.forEach((key: string) => {
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         if (this.active && event.code === key && event.repeat === false && !this.action.cooldown) {
           this.action.attacking = true;
@@ -186,7 +188,7 @@ export class Character {
 
       document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
         if (
-          event.detail?.gamepadId === this.player &&
+          event.detail?.gamepadId === this.playerNum &&
           event.detail.buttonIndex === config.gamepad.attack &&
           !this.action.cooldown
         ) {
@@ -196,7 +198,7 @@ export class Character {
     });
 
     // block
-    config.controls[this.player].block.forEach((key: string) => {
+    config.controls[this.playerNum].block.forEach((key: string) => {
       document.addEventListener("keydown", (event: KeyboardEvent) => {
         if (this.active && event.code === key && event.repeat === false && !this.action.cooldown) {
           this.action.blocking = true;
@@ -205,7 +207,7 @@ export class Character {
 
       document.addEventListener("gamepadButtonDown", (event: GamepadButtonEvent) => {
         if (
-          event.detail?.gamepadId === this.player &&
+          event.detail?.gamepadId === this.playerNum &&
           event.detail.buttonIndex === config.gamepad.block &&
           !this.action.cooldown
         ) {
@@ -286,8 +288,7 @@ export class Character {
   }
 
   private turn(): void {
-    const otherPlayer = this.player === 0 ? 1 : 0;
-    const orientationTarget: Vec2 = this.players[otherPlayer]?.position || { x: 0, y: 0 };
+    const orientationTarget: Vec2 = this.player.position || { x: 0, y: 0 };
     const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
     this.orientation = angle;
 
@@ -357,10 +358,10 @@ export class Character {
   }
 
   private strike(): void {
-    const otherPlayerId = this.player === 0 ? 1 : 0;
-    const otherPlayer: Rectangle = this.players[otherPlayerId].obstacle?.getObject();
+    const otherPlayerId = this.playerNum === 0 ? 1 : 0;
+    const otherPlayer: Rectangle = this.player.obstacle?.getObject();
 
-    const blocked = this.players[otherPlayerId].action.blocking;
+    const blocked = this.player.action.blocking;
     if (blocked) {
       this.audio.play(this.theme.config.blockAudio);
       return;
@@ -392,7 +393,7 @@ export class Character {
   private finish(): void {
     const finish: FinishEvent = new CustomEvent("countdown", {
       detail: {
-        winner: this.player,
+        winner: this.playerNum,
       },
     });
     this.audio.play(this.theme.config.winAudio);
@@ -445,7 +446,7 @@ export class Character {
       action = "move";
     }
 
-    return this.theme.config.players[this.player][action][direction?.zone];
+    return this.theme.config.players[this.playerNum][action][direction?.zone];
   }
 
   private draw(frameCount: number): void {
@@ -455,9 +456,9 @@ export class Character {
     this.ctx.rotate(this.orientation);
 
     // body
-    this.ctx.shadowColor = this.theme.config.colors[this.player];
+    this.ctx.shadowColor = this.theme.config.colors[this.playerNum];
     this.ctx.shadowBlur = 10;
-    this.ctx.fillStyle = this.theme.config.colors[this.player];
+    this.ctx.fillStyle = this.theme.config.colors[this.playerNum];
     this.ctx.fillRect(this.size / -2, this.size / -2, this.size, this.size);
 
     // face
