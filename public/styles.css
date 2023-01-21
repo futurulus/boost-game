@@ -66,7 +66,8 @@ nav ul {
 }
 
 #canvas,
-.loader {
+.loader,
+.click {
 	max-height: 80vh;
 	max-width: calc(80vh * 16 / 9);
 	aspect-ratio: 16/9;
@@ -75,13 +76,20 @@ nav ul {
 	border-radius: 2px;
 }
 
-.loader {
+.loader, .click {
 	position: absolute;
 	left: 0;
 	right: 0;
 	display: flex;
 	justify-content: center;
 	align-items: center;
+}
+
+.click {
+	background-color: var(--background-color);
+	color: var(--accent-color);
+	font-family: var(--font-accent);
+	font-size: 1.5rem;
 }
 
 @keyframes loading-spinner {

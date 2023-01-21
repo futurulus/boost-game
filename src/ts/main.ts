@@ -2,7 +2,6 @@ import { Audio } from "./audio";
 import { Countdown } from "./countdown";
 import { Obstacle } from "./obstacle";
 import { Character } from "./character";
-import { Scene } from "./scene";
 import { Renderer } from "./render";
 import { Collider2d } from "collider2d";
 import { Gui } from "./gui";
@@ -25,8 +24,7 @@ export class Game {
   renderer: Renderer;
   audio: Audio;
 
-  constructor() {
-    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+  constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext("2d");
     if (ctx === null) throw new Error("Can't get context from canvas!");
 
@@ -99,7 +97,23 @@ export class Game {
   }
 }
 
-new Game();
+function showClick() {
+    const click = document.querySelector(".click");
+    if (click === null) return;
+    click.removeAttribute("hidden");
+
+    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    if (canvas === null) return;
+
+    const startGame = () => {
+      click.setAttribute("hidden", "true");
+      new Game(canvas);
+      canvas.removeEventListener("click", startGame);
+    }
+    canvas.addEventListener("click", startGame);
+}
+
+showClick();
 
 if (window.BroadcastChannel) {
   const channel = new BroadcastChannel("sw-messages");
