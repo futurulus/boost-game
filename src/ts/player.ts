@@ -435,23 +435,31 @@ export class Player {
     this.ctx.save();
     const { width, height } = this.ctx.canvas;
     this.ctx.translate(width / 2, height / 2);
+
+    // player-local transformation
+    this.ctx.save();
+
     this.ctx.rotate(this.orientation);
+    this.ctx.scale(this.size, -this.size);
 
     // body
     this.ctx.shadowColor = this.theme.config.colors[this.playerNum];
     this.ctx.shadowBlur = 10;
     this.ctx.fillStyle = this.theme.config.colors[this.playerNum];
-    this.ctx.fillRect(this.size / -2, this.size / -2, this.size, this.size);
-
-    // face
-    this.ctx.shadowColor = "#ff00ff";
-    this.ctx.shadowBlur = 8;
-    this.ctx.fillStyle = "#ff00ff";
-    this.ctx.fillRect(this.size / 2 - 20, this.size / -2, 20, this.size);
+    this.ctx.beginPath();
+    this.ctx.arc(0.25, 0, 0.15, 0, 2 * Math.PI);
+    this.ctx.lineTo(-0.5, 0);
+    this.ctx.lineTo(-1, 0.5);
+    this.ctx.lineTo(1, 0);
+    this.ctx.lineTo(-1, -0.5);
+    this.ctx.lineTo(-0.5, 0);
+    this.ctx.closePath();
+    this.ctx.fill("evenodd");
 
     this.ctx.restore();
 
-    // draw weapon in absolute space
+    // draw weapon in absolute space (but still with relative camera)
+    this.ctx.translate(-this.position.x, -this.position.y);
     if (this.action.attacking && this.active) {
       const weaponPosition = this.getWeaponPosition();
       this.ctx.fillStyle = "#ff0000";
@@ -464,6 +472,7 @@ export class Player {
       this.ctx.closePath();
       this.ctx.fill();
     }
+    this.ctx.restore();
   }
 
   private executeCharacterActions(): void {

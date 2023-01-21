@@ -440,11 +440,14 @@ export class Entity {
   private draw(frameCount: number): void {
     this.ctx.save();
     const { width, height } = this.ctx.canvas;
-    this.ctx.translate(
-      this.position.x - this.player.position.x + width / 2,
-      this.position.y - this.player.position.y + height / 2,
-    );
-    // this.ctx.translate(this.position.x + this.size / 2, this.position.y + this.size / 2);
+    // screen-center coordinates
+    this.ctx.translate(width / 2, height / 2);
+    // camera position
+    this.ctx.translate(-this.player.position.x, -this.player.position.y);
+
+    this.ctx.save();
+    // entity-relative coordinates
+    this.ctx.translate(this.position.x + this.size / 2, this.position.y + this.size / 2);
     this.ctx.rotate(this.orientation);
 
     // body
@@ -461,7 +464,7 @@ export class Entity {
 
     this.ctx.restore();
 
-    // draw weapon in absolute space
+    // draw weapon in absolute space (but still with relative camera)
     if (this.action.attacking && this.active) {
       const weaponPosition = this.getWeaponPosition();
       this.ctx.fillStyle = "#ff0000";
@@ -474,6 +477,7 @@ export class Entity {
       this.ctx.closePath();
       this.ctx.fill();
     }
+    this.ctx.restore();
   }
 
   private executeCharacterActions(): void {
