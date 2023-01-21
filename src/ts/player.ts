@@ -249,18 +249,6 @@ export class Player {
     position.x = newX;
     position.y = newY;
 
-    if (position.x < 0) {
-      position.x = 0;
-    } else if (newX > this.ctx.canvas.width - this.size) {
-      position.x = this.ctx.canvas.width - this.size;
-    }
-
-    if (position.y < 0) {
-      position.y = 0;
-    } else if (newY > this.ctx.canvas.height - this.size) {
-      position.y = this.ctx.canvas.height - this.size;
-    }
-
     this.obstacle.editObstacle({
       a: { x: position.x, y: position.y },
       b: { x: position.x + this.size, y: position.y },
@@ -445,8 +433,8 @@ export class Player {
 
   private draw(frameCount: number): void {
     this.ctx.save();
-    this.ctx.translate(Math.round(this.position.x + this.size / 2), Math.round(this.position.y + this.size / 2));
-
+    const { width, height } = this.ctx.canvas;
+    this.ctx.translate(width / 2, height / 2);
     this.ctx.rotate(this.orientation);
 
     // body

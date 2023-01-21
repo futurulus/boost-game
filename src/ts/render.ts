@@ -15,6 +15,7 @@ export class Renderer {
     this.theme = theme;
     this.fps = 60; // aim for 60fps
     this.counter = 0;
+
     this.initTicker();
   }
 
@@ -48,7 +49,8 @@ export class Renderer {
         frameSkip: frameSkip,
       },
     });
-    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    const { width, height } = this.ctx.canvas;
+    this.ctx.clearRect(0, 0, width, height);
     this.ctx.canvas.dispatchEvent(tick);
 
     this.counter++;
