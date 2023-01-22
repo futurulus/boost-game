@@ -6,8 +6,6 @@ import { Renderer } from "./render";
 import { Collider2d } from "collider2d";
 import { Gui } from "./gui";
 import { GamepadAdapter } from "./gamepadAdapter";
-import { themes } from "../../public/themes/index";
-import { Theme } from "../../public/themes/theme";
 import { registerServiceWorker } from "./registerServiceWorker";
 import { showInstallButton } from "./showInstallButton";
 import { FinishEvent, LoadingEvent } from "./types";
@@ -23,7 +21,6 @@ export class Game {
   gamepadAdapter: GamepadAdapter;
   countdown: Countdown;
   gui: Gui;
-  theme: Theme;
   renderer: Renderer;
   audio: Audio;
 
@@ -32,41 +29,24 @@ export class Game {
     if (ctx === null) throw new Error("Can't get context from canvas!");
 
     this.ctx = ctx;
-    this.showLoader();
+    this.ctx.canvas.classList.add("fade-in");
     this.collider = new Collider2d();
-    this.theme = new Theme(this.ctx, themes.RetroKnights);
     this.obstacles = [];
     this.entities = [];
-    this.audio = new Audio(this.theme);
 
-    this.player = new Player(this, this.theme);
-    const player2 = new Opponent(this, 'player2', this.theme);
+    this.player = new Player(this);
+    const player2 = new Opponent(this, 'player2');
     this.entities.push(player2);
 
     this.gamepadAdapter = new GamepadAdapter(this.ctx);
 
-    this.countdown = new Countdown(this.ctx, this.theme);
-    this.gui = new Gui(this.ctx, this.theme, 2);
+    this.countdown = new Countdown(this.ctx);
+    this.gui = new Gui(this.ctx, 2);
 
-    this.renderer = new Renderer(this.ctx, this.theme);
+    this.renderer = new Renderer(this.ctx);
 
     this.manageState();
     this.start();
-  }
-
-  showLoader() {
-    const loader = document.querySelector(".loader");
-    if (loader === null) return;
-    const progress = loader.querySelector("progress");
-    if (progress === null) return;
-    loader.removeAttribute("hidden");
-    this.ctx.canvas.addEventListener("loadingEvent", ((e: LoadingEvent) => {
-      progress.value = e.detail.progress;
-      if (e.detail.progress === 100) {
-        loader.setAttribute("hidden", "true");
-        this.ctx.canvas.classList.add("fade-in");
-      }
-    }) as EventListener);
   }
 
   manageState() {

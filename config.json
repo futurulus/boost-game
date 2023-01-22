@@ -1,4 +1,8 @@
 {
+	"colors": [
+        "#368dc8",
+        "#d3b447"
+	],
 	"controls": [
 		{
 			"left": ["KeyA"],

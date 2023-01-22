@@ -7,7 +7,6 @@ export class Entity {
   position: Vec2;
   velocity: Vec2;
   orientation: number;
-  obstacle: Obstacle;
 
   protected game: Game;
   protected ctx: CanvasRenderingContext2D;

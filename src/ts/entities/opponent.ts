@@ -1,4 +1,3 @@
-import { Theme } from "../../../public/themes/theme";
 import config from "../../../config.json" assert { type: "json" };
 import { Entity } from "../entity";
 import { Game } from "../main";
@@ -17,7 +16,6 @@ export class Opponent extends Entity {
     cooldown: boolean;
   };
 
-  private theme: Theme;
   private playerNum: number;
   private size: number;
   private speed: number;
@@ -27,9 +25,8 @@ export class Opponent extends Entity {
   private blockDuration: number;
   private cooldownDuration: number;
 
-  constructor(game: Game, id: string, theme: Theme) {
+  constructor(game: Game, id: string) {
     super(game, id);
-    this.theme = theme;
     this.playerNum = 1;
     this.size = 100;
     this.speed = 1;
@@ -218,8 +215,6 @@ export class Opponent extends Entity {
 
       this.velocity.x = (this.velocity.x + collision.overlapV.x * -1) * friction;
       this.velocity.y = (this.velocity.y + collision.overlapV.y * -1) * friction;
-
-      this.game.audio.play(this.theme.config.collideAudio);
     });
   }
 
@@ -265,20 +260,8 @@ export class Opponent extends Entity {
       d: { x: this.position.x, y: this.position.y + this.size },
     };
 
-    const rotatedObstacle = rotate(
-      {
-        a: { x: this.position.x, y: this.position.y },
-        b: { x: this.position.x + this.size, y: this.position.y },
-        c: {
-          x: this.position.x + this.size,
-          y: this.position.y + this.size,
-        },
-        d: { x: this.position.x, y: this.position.y + this.size },
-      },
-      this.orientation
-    );
-
-    this.obstacle.editObstacle(this.theme.config.turnSprites ? rotatedObstacle : obstacle);
+    const rotatedObstacle = rotate(obstacle, this.orientation);
+    this.obstacle.editObstacle(rotatedObstacle);
   }
 
   private attack(): void {
@@ -327,11 +310,8 @@ export class Opponent extends Entity {
 
     const blocked = player.action.blocking;
     if (blocked) {
-      audio.play(this.theme.config.blockAudio);
       return;
     }
-
-    audio.play(this.theme.config.attackAudio);
 
     const otherPlayerPolygon = new Polygon(new Vector(0, 0), [
       new Vector(otherPlayer.a.x, otherPlayer.a.y),
@@ -360,7 +340,6 @@ export class Opponent extends Entity {
         winner: this.playerNum,
       },
     });
-    this.game.audio.play(this.theme.config.winAudio);
     this.ctx.canvas.dispatchEvent(finish);
   }
 
@@ -391,28 +370,6 @@ export class Opponent extends Entity {
     });
   }
 
-  private getSprite(): Sprite {
-    const directions = ["w", "nw", "n", "ne", "e", "se", "s", "sw", "w"];
-    const zones = directions.map((z, i) => ({
-      zone: z,
-      start: Math.PI * -1 - Math.PI / 8 + (i * Math.PI) / 4,
-      end: Math.PI * -1 - Math.PI / 8 + ((i + 1) * Math.PI) / 4,
-    }));
-
-    const direction = zones.find((zone) => this.orientation >= zone.start && this.orientation < zone.end);
-
-    let action = "default";
-    if ((this.active && this.action.blocking) || this.action.blocking) {
-      action = "block";
-    } else if ((this.active && this.action.attacking) || this.action.attacking) {
-      action = "attack";
-    } else if (this.active && (this.action.movingX || this.action.movingY)) {
-      action = "move";
-    }
-
-    return this.theme.config.players[this.playerNum][action][direction?.zone];
-  }
-
   private draw(frameCount: number): void {
     this.ctx.save();
 
@@ -429,9 +386,10 @@ export class Opponent extends Entity {
     this.ctx.rotate(this.orientation);
 
     // body
-    this.ctx.shadowColor = this.theme.config.colors[this.playerNum];
+    const opponentColor = "#d3b447";
+    this.ctx.shadowColor = opponentColor;
     this.ctx.shadowBlur = 10;
-    this.ctx.fillStyle = this.theme.config.colors[this.playerNum];
+    this.ctx.fillStyle = opponentColor;
     this.ctx.fillRect(this.size / -2, this.size / -2, this.size, this.size);
 
     // face

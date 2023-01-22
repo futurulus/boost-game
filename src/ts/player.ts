@@ -7,8 +7,9 @@ import { Obstacle } from "./obstacle";
 import { Theme } from "../../public/themes/theme";
 import { Vec2, FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Sprite, TickEvent } from "./types";
 import { Entity } from "./entity";
+import { Opponent } from "./entities/opponent";
 
-export class Player {
+export class Player extends Entity {
   position: Vec2;
   obstacle: Obstacle;
   action: {
@@ -19,46 +20,26 @@ export class Player {
     cooldown: boolean;
   };
 
-  private ctx: CanvasRenderingContext2D;
-  private audio: Audio;
-  private theme: Theme;
-  private active: boolean;
-  private collider: Collider2d;
-  private entities: Entity[];
-  private obstacles: Obstacle[];
   private playerNum: number;
   private size: number;
-  private orientation: number;
   private speed: number;
   private maxVelocity: number;
   private range: number;
   private attackDuration: number;
   private blockDuration: number;
   private cooldownDuration: number;
-  private velocity: Vec2;
 
-  constructor(game: Game, theme: Theme) {
-    this.ctx = game.ctx;
-    this.audio = game.audio;
-    this.theme = theme;
-    this.active = false;
+  constructor(game: Game) {
+    super(game, 'player');
     this.playerNum = 0;
-    this.collider = game.collider;
-    this.entities = game.entities;
-    this.obstacles = game.obstacles;
     this.size = 100;
     this.position = this.getInitialPosition();
-    this.orientation = 0;
     this.speed = 1;
     this.range = 150;
     this.attackDuration = 200;
     this.blockDuration = 300;
     this.cooldownDuration = 800;
     this.maxVelocity = 20;
-    this.velocity = {
-      x: 0,
-      y: 0,
-    };
     this.obstacle = this.createObstacle(`player${this.playerNum}`);
     this.action = {
       movingX: 0,
@@ -85,7 +66,7 @@ export class Player {
   }
 
   private createObstacle(id: string): Obstacle {
-    return new Obstacle(this.collider, this.obstacles, id, {
+    return new Obstacle(this.game.collider, this.game.obstacles, id, {
       a: { x: this.position.x, y: this.position.y },
       b: { x: this.position.x + this.size, y: this.position.y },
       c: {
@@ -225,7 +206,7 @@ export class Player {
   }
 
   private collide(): void {
-    const obstacles = this.obstacles.filter((obstacle) => obstacle.getId() !== this.obstacle.getId());
+    const obstacles = this.game.obstacles.filter((obstacle) => obstacle.getId() !== this.obstacle.getId());
     obstacles.forEach((obstacle) => {
       const collision = this.obstacle.collidesWith(obstacle);
       const friction = 0.8;
@@ -236,8 +217,6 @@ export class Player {
 
       this.velocity.x = (this.velocity.x + collision.overlapV.x * -1) * friction;
       this.velocity.y = (this.velocity.y + collision.overlapV.y * -1) * friction;
-
-      this.audio.play(this.theme.config.collideAudio);
     });
   }
 
@@ -269,8 +248,8 @@ export class Player {
   }
 
   private turn(): void {
-    const otherPlayer = 0;
-    const orientationTarget: Vec2 = this.entities[otherPlayer]?.position || { x: 0, y: 0 };
+    const opponentId = 0;
+    const orientationTarget: Vec2 = this.game.entities[opponentId]?.position || { x: 0, y: 0 };
     const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
     this.orientation = angle;
 
@@ -297,7 +276,7 @@ export class Player {
       this.orientation
     );
 
-    this.obstacle.editObstacle(this.theme.config.turnSprites ? rotatedObstacle : obstacle);
+    this.obstacle.editObstacle(rotatedObstacle);
   }
 
   private attack(): void {
@@ -340,16 +319,13 @@ export class Player {
   }
 
   private strike(): void {
-    const otherPlayerId = 0;
-    const otherPlayer: Rectangle = this.entities[otherPlayerId].obstacle?.getObject();
+    const opponent = this.game.entities[0] as Opponent;
+    const otherPlayer: Rectangle = opponent.obstacle?.getObject();
 
-    const blocked = this.entities[otherPlayerId].action.blocking;
+    const blocked = opponent.action.blocking;
     if (blocked) {
-      this.audio.play(this.theme.config.blockAudio);
       return;
     }
-
-    this.audio.play(this.theme.config.attackAudio);
 
     const otherPlayerPolygon = new Polygon(new Vector(0, 0), [
       new Vector(otherPlayer.a.x, otherPlayer.a.y),
@@ -366,7 +342,7 @@ export class Player {
       new Vector(weaponPosition.d.x, weaponPosition.d.y),
     ]);
 
-    const hit = this.collider.testPolygonPolygon(weaponPolygon, otherPlayerPolygon) as boolean;
+    const hit = this.game.collider.testPolygonPolygon(weaponPolygon, otherPlayerPolygon) as boolean;
     if (hit) {
       this.finish();
     }
@@ -378,7 +354,6 @@ export class Player {
         winner: this.playerNum,
       },
     });
-    this.audio.play(this.theme.config.winAudio);
     this.ctx.canvas.dispatchEvent(finish);
   }
 
@@ -409,28 +384,6 @@ export class Player {
     });
   }
 
-  private getSprite(): Sprite {
-    const directions = ["w", "nw", "n", "ne", "e", "se", "s", "sw", "w"];
-    const zones = directions.map((z, i) => ({
-      zone: z,
-      start: Math.PI * -1 - Math.PI / 8 + (i * Math.PI) / 4,
-      end: Math.PI * -1 - Math.PI / 8 + ((i + 1) * Math.PI) / 4,
-    }));
-
-    const direction = zones.find((zone) => this.orientation >= zone.start && this.orientation < zone.end);
-
-    let action = "default";
-    if ((this.active && this.action.blocking) || this.action.blocking) {
-      action = "block";
-    } else if ((this.active && this.action.attacking) || this.action.attacking) {
-      action = "attack";
-    } else if (this.active && (this.action.movingX || this.action.movingY)) {
-      action = "move";
-    }
-
-    return this.theme.config.players[this.playerNum][action][direction?.zone];
-  }
-
   private draw(frameCount: number): void {
     this.ctx.save();
     const { width, height } = this.ctx.canvas;
@@ -443,9 +396,10 @@ export class Player {
     this.ctx.scale(this.size, -this.size);
 
     // body
-    this.ctx.shadowColor = this.theme.config.colors[this.playerNum];
+    const playerColor = '#368dc8';
+    this.ctx.shadowColor = playerColor;
     this.ctx.shadowBlur = 10;
-    this.ctx.fillStyle = this.theme.config.colors[this.playerNum];
+    this.ctx.fillStyle = playerColor;
     this.ctx.beginPath();
     this.ctx.arc(0.25, 0, 0.15, 0, 2 * Math.PI);
     this.ctx.lineTo(-0.5, 0);

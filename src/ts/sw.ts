@@ -1,6 +1,4 @@
 /// <reference lib="webworker" />
-import { getGameAssets } from "./getGameAssets";
-
 const version = "0.0.5";
 const cacheName = `attacke-${version}`;
 const channel = new BroadcastChannel("sw-messages");
@@ -14,7 +12,6 @@ const cacheAssets = () => {
     "/manifest.json",
     "/assets/PressStart2P.woff2",
     "/assets/favicon.svg",
-    ...getGameAssets(),
   ];
 
   caches.open(cacheName).then(function (cache) {
