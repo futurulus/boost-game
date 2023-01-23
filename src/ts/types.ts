@@ -21,11 +21,12 @@ export type Rectangle = {
   d: Vec2;
 };
 
+export interface Tick {
+  dt: number;
+}
+
 export interface TickEvent extends Event {
-  readonly detail?: {
-    frameCount: number;
-    frameSkip: number;
-  };
+  readonly detail?: Tick;
 }
 
 export interface FinishEvent extends Event {

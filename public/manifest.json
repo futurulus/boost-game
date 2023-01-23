@@ -4,8 +4,8 @@
 	"display": "fullscreen",
 	"scope": "/",
 	"start_url": "/",
-	"name": "Attacke!",
-	"short_name": "Attacke!",
+	"name": "Boost",
+	"short_name": "Boost",
 	"icons": [
 		{
 			"src": "assets/icon-192x192.png",

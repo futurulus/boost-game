@@ -1,4 +1,3 @@
-import { Audio } from "./audio";
 import { Countdown } from "./countdown";
 import { Obstacle } from "./obstacle";
 import { Player } from "./player";
@@ -11,6 +10,7 @@ import { showInstallButton } from "./showInstallButton";
 import { FinishEvent, LoadingEvent } from "./types";
 import { Entity } from "./entity";
 import { Opponent } from "./entities/opponent";
+import { Timer } from "./entities/timer";
 
 export class Game {
   ctx: CanvasRenderingContext2D;
@@ -22,7 +22,6 @@ export class Game {
   countdown: Countdown;
   gui: Gui;
   renderer: Renderer;
-  audio: Audio;
 
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext("2d");
@@ -37,6 +36,13 @@ export class Game {
     this.player = new Player(this);
     const player2 = new Opponent(this, 'player2');
     this.entities.push(player2);
+    for (let x = -600; x <= 600; x += 400) {
+      for (let y = -600; y <= 600; y += 400) {
+        const timer = new Timer(this, `t_${x}_${y}`);
+        timer.position = { x, y };
+        this.entities.push(timer);
+      }
+    }
 
     this.gamepadAdapter = new GamepadAdapter(this.ctx);
 

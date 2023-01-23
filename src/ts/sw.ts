@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 const version = "0.0.5";
-const cacheName = `attacke-${version}`;
+const cacheName = `boost-game-${version}`;
 const channel = new BroadcastChannel("sw-messages");
 
 const cacheAssets = () => {
