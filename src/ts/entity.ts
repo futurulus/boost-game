@@ -1,11 +1,24 @@
-import { Game } from "./main";
+import { C, Game } from "./main";
 import { Obstacle } from "./obstacle";
-import { Rectangle, Tick, TickEvent, Vec2 } from "./types";
+import { Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
 
 export class Entity {
   readonly id: string;
-  position: Vec2;
-  velocity: Vec2;
+  /**
+   * Position in spacetime at the moment of intersecting the player's backward
+   * light cone
+   */
+  position: Vec3;
+  /**
+   * Three-velocity (https://en.wikipedia.org/wiki/Four-velocity) at the moment
+   * of intersecting the player's backward light cone
+   */
+  velocity: Vec3;
+  /**
+   * Proper time for this entity at the moment of intersecting the player's
+   * backward light cone
+   */
+  pt: number;
   scale: Vec2;
   orientation: number;
   obstacle?: Obstacle;
@@ -20,9 +33,9 @@ export class Entity {
     this.active = false;
 
     this.id = id;
-    this.position = { x: 0, y: 0 };
-    this.velocity = { x: 0, y: 0 };
-    this.scale = { x: 1, y: 1 };
+    this.position = vec3(0, 0, 0);
+    this.velocity = vec3(1, 0, 0);
+    this.scale = vec2(1, 1);
     this.orientation = 0;
     const obstacleRect = this.getObstacleRectangle();
     if (obstacleRect !== undefined) {

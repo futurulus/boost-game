@@ -1,0 +1,61 @@
+==Intersection between a cone and a moving point==
+
+x^2 + y^2 = t^2
+x = x0 + vx t
+y = y0 + vy t
+
+(x0 + vx t)^2 + (y0 + vy t)^2 = t^2
+(x0^2 + y0^2) + 2 (x0 vx + y0 vy) t + (vx^2 + vy^2 - 1) t^2 = 0
+
+t = -2 (x0 vx + y0 vy) ± √[4 (x0 vx + y0 vy)^2
+                        - 4 (vx^2 + vy^2 - 1) (x0^2 + y0^2)]
+    / 2 (vx^2 + vy^2 - 1)
+  = -(x0 vx + y0 vy) / (|v|^2 - 1)
+    ± √[(x0 vx + y0 vy)^2 - (vx^2 + vy^2 - 1) (x0^2 + y0^2)]
+      / (|v|^2 - 1)^2  [1]
+  = -(x0 vx + y0 vy) / (|v|^2 - 1)
+    ± √[x0^2 vx^2 + y0^2 vy^2 + 2 x0 y0 vx vy - (x0^2 vx^2 + y0^2 vx^2 + x0^2 vy^2 + y0^2 vy^2 - x0^2 + y0^2)]
+      / (|v|^2 - 1)^2
+  = -(x0 vx + y0 vy) / (|v|^2 - 1)
+    ± √[2x0 y0 vx vy - (y0^2 vx^2 + x0^2 vy^2 - x0^2 - y0^2)]
+      / (|v|^2 - 1)^2
+  = -(x0 vx + y0 vy) / (|v|^2 - 1)
+    ± √[x0^2 + y0^2 + 2x0 y0 vx vy - y0^2 vx^2 - x0^2 vy^2]
+      / (|v|^2 - 1)^2
+  = -(x0 vx + y0 vy) / (|v|^2 - 1)
+    ± √[x0^2 + y0^2 - (y0 vx + x0 vy)^2] / (|v|^2 - 1)^2
+
+[1] = -(p0·v) / (v·v - 1)
+      ± √[(p0·v)^2 - (v·v - 1) (p0·p0)] / (v·v - 1)^2
+where p0 = p(t) - vt
+p and v can be computed in either global frame or player frame
+  (but must be consistent!)
+
+==Intersection between a cone and a moving line segment==
+
+x^2 + y^2 = t^2
+x = ux0 + (1-u)x1 + vt
+y = uy0 + (1-u)y1 + vt
+
+[ux0 + (1-u)x1 + vt]^2 + [uy0 + (1-u)y1 + vt]^2 = t^2
+u^2 (x0^2 + y0)^2 + (1-u)^2 (x1^2 + y1^2) + 2 v^2 t^2
+ + 2u(1-u) (x0 x1 + y0 y1) + 2uvt (x0 + y0) + 2(1-u)vt (x1 + y1) = t^2
+
+(2v^2 - 1) t^2
+ + 2vt [u (x0 + y0) + (1-u) (x1 + y1)]
+ + u^2 (x0^2 + y0^2) + (1-u)^2 (x1^2 + y1^2) + 2u(1-u) (x0 x1 + y0 y1)
+ = 0
+
+u^2 (x0^2 + y0)^2
+ + (1 - 2u + u^2) (x1^2 + y1^2)
+ + (2u - u^2) (x0 x1 + y0 y1)
+ + 2uvt (x0 + y0)
+ + (2vt - 2uvt) (x1 + y1)
+ + 2 v^2 t^2
+ - t^2
+ = 0
+
+[(x0^2 + y0^2) - x0 x1 - y0 y1 + (x1^2 + y1^2)] u^2
+ + 2[x0 x1 + y0 y1 + vt (x0 + y0 - x1 - y1) - (x1^2 + y1^2)] u
+ + 2vt (x1 + y1) + (2 v^2 - 1) t^2 + (x1^2 + y1^2)
+ = 0

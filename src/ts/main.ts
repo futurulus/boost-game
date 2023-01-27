@@ -7,10 +7,13 @@ import { Gui } from "./gui";
 import { GamepadAdapter } from "./gamepadAdapter";
 import { registerServiceWorker } from "./registerServiceWorker";
 import { showInstallButton } from "./showInstallButton";
-import { FinishEvent, LoadingEvent } from "./types";
+import { FinishEvent, vec3 } from "./types";
 import { Entity } from "./entity";
 import { Opponent } from "./entities/opponent";
 import { Timer } from "./entities/timer";
+
+/** Speed of light in canvas pixels per second */
+export const C = 1000;
 
 export class Game {
   ctx: CanvasRenderingContext2D;
@@ -39,7 +42,7 @@ export class Game {
     for (let x = -600; x <= 600; x += 400) {
       for (let y = -600; y <= 600; y += 400) {
         const timer = new Timer(this, `t_${x}_${y}`);
-        timer.position = { x, y };
+        timer.position = vec3(0, x, y);
         this.entities.push(timer);
       }
     }

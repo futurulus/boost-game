@@ -3,7 +3,7 @@ import { Polygon, Vector } from "collider2d";
 import config from "../../../config.json" assert { type: "json" };
 import { Entity } from "../entity";
 import { Game } from "../main";
-import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, Vec2 } from "../types";
+import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, vec2, vec3 } from "../types";
 import { clamp, rotate } from "../util";
 
 export class Opponent extends Entity {
@@ -30,8 +30,8 @@ export class Opponent extends Entity {
     this.blockDuration = 300;
     this.cooldownDuration = 800;
     this.maxVelocity = 1000;
-    this.position = { x: 250, y: 250 };
-    this.scale = { x: 50, y: 50 };
+    this.position = vec3(0, 0.25, 0.25);
+    this.scale = vec2(0.05, 0.05);
     this.action = {
       movingX: 0,
       movingY: 0,
@@ -45,10 +45,10 @@ export class Opponent extends Entity {
 
   protected getObstacleRectangle(): Rectangle {
     return rotate({
-      a: { x: this.position.x - this.scale.x, y: this.position.y - this.scale.y },
-      b: { x: this.position.x + this.scale.x, y: this.position.y - this.scale.y },
-      c: { x: this.position.x + this.scale.x, y: this.position.y + this.scale.y },
-      d: { x: this.position.x - this.scale.x, y: this.position.y + this.scale.y },
+      a: vec2(this.position.x - this.scale.x, this.position.y - this.scale.y),
+      b: vec2(this.position.x + this.scale.x, this.position.y - this.scale.y),
+      c: vec2(this.position.x + this.scale.x, this.position.y + this.scale.y),
+      d: vec2(this.position.x - this.scale.x, this.position.y + this.scale.y),
     }, this.orientation);
   }
 
@@ -217,7 +217,7 @@ export class Opponent extends Entity {
   }
 
   private turn(): void {
-    const orientationTarget: Vec2 = this.game.player.position || { x: 0, y: 0 };
+    const orientationTarget = this.game.player.position || vec3(0, 0, 0);
     const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
     this.orientation = angle;
   }
@@ -245,16 +245,10 @@ export class Opponent extends Entity {
   private getWeaponPosition(): Rectangle {
     return rotate(
       {
-        a: { x: this.position.x - this.scale.x, y: this.position.y - this.scale.y },
-        b: {
-          x: this.position.x + this.scale.x + this.range,
-          y: this.position.y - this.scale.y,
-        },
-        c: {
-          x: this.position.x + this.scale.x + this.range,
-          y: this.position.y + this.scale.y,
-        },
-        d: { x: this.position.x - this.scale.x, y: this.position.y + this.scale.y },
+        a: vec2(this.position.x - this.scale.x, this.position.y - this.scale.y),
+        b: vec2(this.position.x + this.scale.x + this.range, this.position.y - this.scale.y),
+        c: vec2(this.position.x + this.scale.x + this.range, this.position.y + this.scale.y),
+        d: vec2(this.position.x - this.scale.x, this.position.y + this.scale.y),
       },
       this.orientation,
       { x: this.range / 2, y: 0 } // todo: this works only by chance. need to refactor!
@@ -321,8 +315,8 @@ export class Opponent extends Entity {
   }
 
   private reset(): void {
-    this.position = { x: 250, y: 250 };
-    this.velocity = { x: 0, y: 0 };
+    this.position = vec3(0, 0.25, 0.25);
+    this.velocity = vec3(1, 0, 0);
     this.move(0);
     window.requestAnimationFrame(() => {
       this.turn();
