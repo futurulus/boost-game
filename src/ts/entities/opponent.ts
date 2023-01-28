@@ -194,24 +194,26 @@ export class Opponent extends Entity {
         return;
       }
 
-      this.velocity.x = (this.velocity.x + collision.overlapV.x * -1) * friction;
-      this.velocity.y = (this.velocity.y + collision.overlapV.y * -1) * friction;
+      const newVelX = (this.velocity.x + collision.overlapV.x * -1) * friction;
+      const newVelY = (this.velocity.y + collision.overlapV.y * -1) * friction;
+      this.velocity = vec2(newVelX, newVelY).spaceToVel3();
     });
   }
 
   protected move(dt: number): void {
     const { action } = this;
     const reduction = Math.pow(0.8, dt * 60);
-    this.velocity.x = clamp(
+    const newVelX = clamp(
       action.movingX ? this.velocity.x + action.movingX * this.acceleration * dt : this.velocity.x * reduction,
       this.maxVelocity * -1,
       this.maxVelocity
     );
-    this.velocity.y = clamp(
+    const newVelY = clamp(
       action.movingY ? this.velocity.y + action.movingY * this.acceleration * dt : this.velocity.y * reduction,
       this.maxVelocity * -1,
       this.maxVelocity
     );
+    this.velocity = vec2(newVelX, newVelY).spaceToVel3();
 
     super.move(dt);
   }

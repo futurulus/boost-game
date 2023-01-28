@@ -1,3 +1,4 @@
+import { lightConeIntersection } from "./geometry";
 import { C, Game } from "./main";
 import { Obstacle } from "./obstacle";
 import { Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
@@ -37,10 +38,7 @@ export class Entity {
     this.velocity = vec3(1, 0, 0);
     this.scale = vec2(1, 1);
     this.orientation = 0;
-    const obstacleRect = this.getObstacleRectangle();
-    if (obstacleRect !== undefined) {
-      this.obstacle = new Obstacle(this.game.collider, this.game.obstacles, this.id, obstacleRect);
-    }
+    this.pt = 0;
 
     window.requestAnimationFrame(() => {
       this.initialize();
@@ -60,16 +58,19 @@ export class Entity {
   }
 
   protected initialize(): void {
+    const obstacleRect = this.getObstacleRectangle();
+    if (obstacleRect !== undefined) {
+      this.obstacle = new Obstacle(this.game.collider, this.game.obstacles, this.id, obstacleRect);
+    }
+
     this.move(0);
   }
 
   protected move(dt: number): void {
-    const { position, velocity } = this;
-    const newX = position.x + velocity.x * dt;
-    const newY = position.y + velocity.y * dt;
-
-    position.x = newX;
-    position.y = newY;
+    const { position: oldPosition, velocity } = this;
+    const { player } = this.game;
+    this.position = lightConeIntersection(player.position, oldPosition, velocity);
+    this.pt += (this.position.t - oldPosition.t) / velocity.t;
 
     if (this.obstacle !== undefined) {
       const newObstacleRect = this.getObstacleRectangle();

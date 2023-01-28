@@ -12,21 +12,23 @@ t = -2 (x0 vx + y0 vy) ± √[4 (x0 vx + y0 vy)^2
     / 2 (vx^2 + vy^2 - 1)
   = -(x0 vx + y0 vy) / (|v|^2 - 1)
     ± √[(x0 vx + y0 vy)^2 - (vx^2 + vy^2 - 1) (x0^2 + y0^2)]
-      / (|v|^2 - 1)^2  [1]
+      / (|v|^2 - 1)  [1]
   = -(x0 vx + y0 vy) / (|v|^2 - 1)
     ± √[x0^2 vx^2 + y0^2 vy^2 + 2 x0 y0 vx vy - (x0^2 vx^2 + y0^2 vx^2 + x0^2 vy^2 + y0^2 vy^2 - x0^2 + y0^2)]
-      / (|v|^2 - 1)^2
+      / (|v|^2 - 1)
   = -(x0 vx + y0 vy) / (|v|^2 - 1)
     ± √[2x0 y0 vx vy - (y0^2 vx^2 + x0^2 vy^2 - x0^2 - y0^2)]
-      / (|v|^2 - 1)^2
+      / (|v|^2 - 1)
   = -(x0 vx + y0 vy) / (|v|^2 - 1)
     ± √[x0^2 + y0^2 + 2x0 y0 vx vy - y0^2 vx^2 - x0^2 vy^2]
-      / (|v|^2 - 1)^2
+      / (|v|^2 - 1)
   = -(x0 vx + y0 vy) / (|v|^2 - 1)
-    ± √[x0^2 + y0^2 - (y0 vx + x0 vy)^2] / (|v|^2 - 1)^2
+    ± √[x0^2 + y0^2 - (y0 vx + x0 vy)^2] / (|v|^2 - 1)
 
 [1] = -(p0·v) / (v·v - 1)
-      ± √[(p0·v)^2 - (v·v - 1) (p0·p0)] / (v·v - 1)^2
+      ± √[(p0·v)^2 - (v·v - 1) (p0·p0)] / (v·v - 1)
+[1] = (p0·v) / (1 - v·v)
+      + √[(p0·v)^2 + (1 - v·v) (p0·p0)] / (1 - v·v)
 where p0 = p(t) - vt
 p and v can be computed in either global frame or player frame
   (but must be consistent!)

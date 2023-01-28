@@ -6,6 +6,7 @@ import { Opponent } from "./entities/opponent";
 import { Game, PX } from "./main";
 import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, vec2, vec3 } from "./types";
 import { clamp, rotate } from "./util";
+import { Timer } from "./entities/timer";
 
 export class Player extends Entity {
   action: {
@@ -22,6 +23,7 @@ export class Player extends Entity {
   private attackDuration: number;
   private blockDuration: number;
   private cooldownDuration: number;
+  private timer: Timer;
 
   constructor(game: Game) {
     super(game, 'player');
@@ -40,6 +42,7 @@ export class Player extends Entity {
       blocking: false,
       cooldown: false,
     };
+    this.timer = new Timer(this.game, 'playerTimer');
 
     this.registerControls();
   }
@@ -195,26 +198,36 @@ export class Player extends Entity {
         return;
       }
 
-      this.velocity.x = (this.velocity.x + collision.overlapV.x * -1) * friction;
-      this.velocity.y = (this.velocity.y + collision.overlapV.y * -1) * friction;
+      const newVelX = (this.velocity.x + collision.overlapV.x * -1) * friction;
+      const newVelY = (this.velocity.y + collision.overlapV.y * -1) * friction;
+      this.velocity = vec2(newVelX, newVelY).spaceToVel3();
     });
   }
 
   protected move(dt: number): void {
     const { action } = this;
     const reduction = Math.pow(0.8, dt * 60);
-    this.velocity.x = clamp(
+    const newVelX = clamp(
       action.movingX ? this.velocity.x + action.movingX * this.acceleration * dt : this.velocity.x * reduction,
       this.maxVelocity * -1,
       this.maxVelocity
     );
-    this.velocity.y = clamp(
+    const newVelY = clamp(
       action.movingY ? this.velocity.y + action.movingY * this.acceleration * dt : this.velocity.y * reduction,
       this.maxVelocity * -1,
       this.maxVelocity
     );
+    this.velocity = vec2(newVelX, newVelY).spaceToVel3();
 
-    super.move(dt);
+    /*
+     * We set our position manually instead of calling super.move() because
+     * Entity.move is defined in terms of the player's light cone.
+     */
+    this.position = this.position.plus(this.velocity.times(dt));
+    this.pt += dt;
+
+    this.timer.position = this.position;
+    this.timer.pt = this.pt;
   }
 
   private turn(): void {
@@ -333,8 +346,9 @@ export class Player extends Entity {
       this.ctx.shadowColor = playerColor;
       this.ctx.shadowBlur = 10;
       this.ctx.fillStyle = playerColor;
+      this.ctx.moveTo(-0.2, 0);
       this.ctx.beginPath();
-      this.ctx.arc(0.25, 0, 0.15, 0, 2 * Math.PI);
+      this.ctx.arc(0, 0, 0.2, Math.PI, 3 * Math.PI);
       this.ctx.lineTo(-0.5, 0);
       this.ctx.lineTo(-1, 0.5);
       this.ctx.lineTo(1, 0);

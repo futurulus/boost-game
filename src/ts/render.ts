@@ -1,5 +1,7 @@
 import { TickEvent } from "./types";
 
+const DT_MAX = 0.1;
+
 export class Renderer {
   ctx: CanvasRenderingContext2D;
   oldTimeStamp: number = 0;
@@ -19,7 +21,7 @@ export class Renderer {
 
   private tick() {
     const timeStamp = performance.now();
-    const dt = (timeStamp - this.oldTimeStamp) / 1000;
+    const dt = Math.min(DT_MAX, (timeStamp - this.oldTimeStamp) / 1000);
     this.oldTimeStamp = timeStamp;
 
     const tick: TickEvent = new CustomEvent("tick", {
