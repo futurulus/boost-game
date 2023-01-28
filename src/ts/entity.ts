@@ -109,7 +109,7 @@ export class Entity {
     const { width, height } = this.ctx.canvas;
     this.ctx.translate(width / 2, height / 2);
     // -y for right-hand coordinate system
-    this.ctx.scale(1, -1);
+    this.ctx.scale(C, -C);
     // camera position
     const { x: camX, y: camY } = this.game.player.position;
     this.ctx.translate(-camX, -camY);

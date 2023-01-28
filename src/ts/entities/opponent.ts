@@ -2,7 +2,7 @@ import { Polygon, Vector } from "collider2d";
 
 import config from "../../../config.json" assert { type: "json" };
 import { Entity } from "../entity";
-import { Game } from "../main";
+import { Game, PX } from "../main";
 import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, vec2, vec3 } from "../types";
 import { clamp, rotate } from "../util";
 
@@ -15,7 +15,7 @@ export class Opponent extends Entity {
     cooldown: boolean;
   };
 
-  private speed: number;
+  private acceleration: number;
   private maxVelocity: number;
   private range: number;
   private attackDuration: number;
@@ -24,14 +24,14 @@ export class Opponent extends Entity {
 
   constructor(game: Game, id: string) {
     super(game, id);
-    this.speed = 400;
-    this.range = 150;
+    this.acceleration = 2.0;
+    this.range = 150 * PX;
     this.attackDuration = 200;
     this.blockDuration = 300;
     this.cooldownDuration = 800;
-    this.maxVelocity = 1000;
-    this.position = vec3(0, 0.25, 0.25);
-    this.scale = vec2(0.05, 0.05);
+    this.maxVelocity = 1.0;
+    this.position = vec3(0, 250 * PX, 250 * PX);
+    this.scale = vec2(50 * PX, 50 * PX);
     this.action = {
       movingX: 0,
       movingY: 0,
@@ -203,12 +203,12 @@ export class Opponent extends Entity {
     const { action } = this;
     const reduction = Math.pow(0.8, dt * 60);
     this.velocity.x = clamp(
-      action.movingX ? this.velocity.x + action.movingX * this.speed * dt : this.velocity.x * reduction,
+      action.movingX ? this.velocity.x + action.movingX * this.acceleration * dt : this.velocity.x * reduction,
       this.maxVelocity * -1,
       this.maxVelocity
     );
     this.velocity.y = clamp(
-      action.movingY ? this.velocity.y + action.movingY * this.speed * dt : this.velocity.y * reduction,
+      action.movingY ? this.velocity.y + action.movingY * this.acceleration * dt : this.velocity.y * reduction,
       this.maxVelocity * -1,
       this.maxVelocity
     );

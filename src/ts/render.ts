@@ -30,6 +30,6 @@ export class Renderer {
     });
     const { width, height } = this.ctx.canvas;
     this.ctx.clearRect(0, 0, width, height);
-    // this.ctx.canvas.dispatchEvent(tick);
+    this.ctx.canvas.dispatchEvent(tick);
   }
 }

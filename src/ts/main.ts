@@ -12,8 +12,24 @@ import { Entity } from "./entity";
 import { Opponent } from "./entities/opponent";
 import { Timer } from "./entities/timer";
 
-/** Speed of light in canvas pixels per second */
-export const C = 1000;
+/**
+ * Speed of light in canvas pixels per second.
+ *
+ * Most code will **not** need this constant; positions and velocities are
+ * expressed in "natural units", setting c = 1. In other words, a position of
+ * one light-second or 1000 pixels to the right on the X axis is represented by
+ * `Vec2(1, 0)`. This constant is primarily used in core rendering code.
+ */
+export const C = 2000;
+/**
+ * One pixel, in light-seconds. Useful for when you want to specify something
+ * in pixels: 300*PX is 300px.
+ *
+ * Note that this will generally give you canvas coordinate pixels, which are
+ * not necessarily equal to screen pixels; the canvas is resized in CSS (but
+ * pretends to be 1920x1080 for drawing operations).
+ */
+export const PX = 1 / C;
 
 export class Game {
   ctx: CanvasRenderingContext2D;
@@ -42,7 +58,7 @@ export class Game {
     for (let x = -600; x <= 600; x += 400) {
       for (let y = -600; y <= 600; y += 400) {
         const timer = new Timer(this, `t_${x}_${y}`);
-        timer.position = vec3(0, x, y);
+        timer.position = vec3(0, x / C, y / C);
         this.entities.push(timer);
       }
     }
