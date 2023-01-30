@@ -5,6 +5,7 @@ import { Entity } from "../entity";
 import { Game, PX } from "../main";
 import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, vec2, vec3 } from "../types";
 import { clamp, rotate } from "../util";
+import { Timer } from "./timer";
 
 export class Opponent extends Entity {
   action: {
@@ -21,6 +22,7 @@ export class Opponent extends Entity {
   private attackDuration: number;
   private blockDuration: number;
   private cooldownDuration: number;
+  private timer: Timer;
 
   constructor(game: Game, id: string) {
     super(game, id);
@@ -39,6 +41,7 @@ export class Opponent extends Entity {
       blocking: false,
       cooldown: false,
     };
+    this.timer = new Timer(this.game, 'opponentTimer');
 
     this.registerControls();
   }
@@ -216,6 +219,9 @@ export class Opponent extends Entity {
     this.velocity = vec2(newVelX, newVelY).spaceToVel3();
 
     super.move(dt);
+
+    this.timer.position = this.position;
+    this.timer.pt = this.pt;
   }
 
   private turn(): void {
@@ -339,6 +345,14 @@ export class Opponent extends Entity {
       this.ctx.shadowBlur = 8;
       this.ctx.fillStyle = "#ff00ff";
       this.ctx.fillRect(0.8, -1, 0.2, 2);
+
+      // window
+      this.ctx.shadowBlur = 0;
+      this.ctx.fillStyle = "black";
+      this.ctx.moveTo(0.4, 0);
+      this.ctx.beginPath();
+      this.ctx.arc(0, 0, 0.4, 0, 2 * Math.PI);
+      this.ctx.fill();
     })
 
     if (this.action.attacking && this.active) {
