@@ -65,7 +65,7 @@ export class Opponent extends Entity {
       });
       document.addEventListener("keyup", (event: KeyboardEvent) => {
         this.captureEvent(event);
-        if (event.code === key) {
+        if (event.code === key && this.action.movingX === -1) {
           this.action.movingX = 0;
         }
       });
@@ -81,7 +81,7 @@ export class Opponent extends Entity {
       });
       document.addEventListener("keyup", (event: KeyboardEvent) => {
         this.captureEvent(event);
-        if (event.code === key) {
+        if (event.code === key && this.action.movingX === 1) {
           this.action.movingX = 0;
         }
       });
@@ -97,7 +97,7 @@ export class Opponent extends Entity {
       });
       document.addEventListener("keyup", (event: KeyboardEvent) => {
         this.captureEvent(event);
-        if (event.code === key) {
+        if (event.code === key && this.action.movingY === 1) {
           this.action.movingY = 0;
         }
       });
@@ -113,7 +113,7 @@ export class Opponent extends Entity {
       });
       document.addEventListener("keyup", (event: KeyboardEvent) => {
         this.captureEvent(event);
-        if (event.code === key) {
+        if (event.code === key && this.action.movingY === -1) {
           this.action.movingY = 0;
         }
       });
