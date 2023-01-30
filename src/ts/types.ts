@@ -84,7 +84,7 @@ export class Vec3 {
     return new Vec3(this.t + other.t, this.x + other.x, this.y + other.y);
   }
   minus(other: Vec3): Vec3 {
-    return new Vec3(this.t - other.t, this.y - other.y, this.x - other.x);
+    return new Vec3(this.t - other.t, this.x - other.x, this.y - other.y);
   }
   /**
    * @returns The three-vector inner product of two vectors. Uses metric

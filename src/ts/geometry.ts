@@ -1,12 +1,14 @@
 import { Vec3 } from "./types";
 
 export const lightConeIntersection = (
-    lightConePosition: Vec3, linePosition: Vec3, lineVelocity: Vec3
+    lightConePosition: Vec3, linePosition: Vec3, lineVelocity: Vec3, log: boolean = false
 ) => {
     const lineVel2 = lineVelocity.vel2();
-    const linePosSpace = linePosition.minus(lightConePosition).space();
     // Point on line where t = lightConePosition.t
-    const p0 = linePosSpace.minus(lineVel2.times(linePosition.t));
+    const p0 = linePosition
+        .minus(lightConePosition)
+        .space()
+        .plus(lineVel2.times(lightConePosition.t - linePosition.t));
     const dot = p0.dot(lineVel2);
     const invGamma = 1 - lineVel2.magSq();
 
