@@ -89,10 +89,14 @@ export class Entity {
 
   /** Execute `draw` with the context transformed into entity-relative coordinates */
   protected drawLocal(draw: () => void): void {
+    const { position: playerPos, velocity: playerVel } = this.game.player;
     this.drawWorld(() => {
       this.ctx.save();
 
-      this.ctx.translate(this.position.x, this.position.y);
+      const relPos = this.position.minus(playerPos);
+      const relVel = playerVel.inv().boost(this.velocity);
+      const o = relPos.boost(relVel).plus(playerPos);
+      this.ctx.translate(o.x, o.y);
       this.ctx.rotate(this.orientation);
       this.ctx.scale(this.scale.x, this.scale.y);
 
@@ -102,7 +106,14 @@ export class Entity {
     })
   }
 
-  /** Execute `draw` with the context transformed into camera-relative coordinates */
+  /**
+   * Execute `draw` with the context transformed into camera-relative
+   * coordinates. Note that since drawing commands are 2D and don't allow
+   * specifying a t coordinate, this can't be fully general; it assumes the t
+   * coordinate is equal to that of this entity. That means in practice that
+   * world-relative coordinates should be close to the origin of the entity's
+   * coordinate system.
+   */
   protected drawWorld(draw: () => void): void {
     this.ctx.save();
 
@@ -112,8 +123,13 @@ export class Entity {
     // -y for right-hand coordinate system
     this.ctx.scale(C, -C);
     // camera position
-    const { x: camX, y: camY } = this.game.player.position;
-    this.ctx.translate(-camX, -camY);
+    const { position: playerPos, velocity: playerVel } = this.game.player;
+    const relPos = this.position.minus(playerPos);
+    const relVel = this.velocity.boost(playerVel.inv());
+    const o = relPos.boost(relVel);
+    const vx = relPos.plus(vec3(0, 1, 0)).boost(relVel).minus(o);
+    const vy = relPos.plus(vec3(0, 0, 1)).boost(relVel).minus(o);
+    this.ctx.transform(vx.x, vx.y, vy.x, vy.y, -playerPos.x, -playerPos.y);
 
     draw();
 

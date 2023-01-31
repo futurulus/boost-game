@@ -97,16 +97,21 @@ export class Vec3 {
   times(scale: number): Vec3 { return new Vec3(this.t * scale, this.x * scale, this.y * scale); }
 
   /**
-   * @returns Relativistic velocity sum: the overall measured velocity of an
-   * object with velocity equal to this vector in the local frame of reference,
-   * seen from a global frame of reference in which the local frame of reference
-   * is moving with velocity `reference`. Vec2 objects are interpreted as
-   * coordinate velocity, Vec3 as three-velocity (in all cases in units where c
-   * = 1).
+   * @returns Active Lorentz boost: transforms this three-vector from the local
+   * frame of reference to a global frame of reference in which the local frame
+   * of reference is moving with velocity `reference`. A Vec2 object for
+   * `reference` is interpreted as coordinate velocity, Vec3 as three-velocity
+   * (in all cases in units where c = 1).
+   *
+   * Since three-velocities are three-vectors, this can also be used as a
+   * relativistic velocity sum, like the method of the same name on Vec2: the
+   * overall measured (three-)velocity of an object with this velocity in the
+   * local frame has a three-velocity of this.boost(reference) in the global
+   * frame.
    *
    * Caution: relativistic velocity addition is **neither commutative nor
    * associative**. Both order and grouping matter; in general, `v2.boost(v1)`
-   * will have the same coordinate velocity magnitude as `v1.boost(v2)` but be
+   * will have the same velocity magnitude as `v1.boost(v2)` but be spatially
    * rotated by some angle.
    */
   boost(reference: Vec2 | Vec3): Vec3 {
@@ -114,7 +119,7 @@ export class Vec3 {
 
     // https://physics.stackexchange.com/a/470031 eq (02)
     //   X = this = (t, x)
-    //   U = reference = (g, -gu)  negative because this is an inverse transform
+    //   U = reference = (g, -gu)  negative because this is an inverse/active transform
     //   X' = this.boost(reference) = (t', x')
     //   [natural units: c = 1]
     const [thisSpace, referenceSpace] = [this.space(), reference.space()];
@@ -127,6 +132,11 @@ export class Vec3 {
     return new Vec3(this.t * reference.t + spatialDot, x, y);
   }
 
+  /**
+   * @returns This vector with the spatial part negated (equivalent to raising/
+   * lowering indices, or the "negation" of a three-velocity).
+   */
+  inv(): Vec3 { return new Vec3(this.t, -this.x, -this.y); }
   /**
    * @returns The spacetime interval associated with this three-vector. Positive
    * if timelike, negative if spacelike.

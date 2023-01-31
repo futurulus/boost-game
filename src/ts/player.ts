@@ -227,6 +227,7 @@ export class Player extends Entity {
     this.pt += dt;
 
     this.timer.position = this.position;
+    this.timer.velocity = this.velocity;
     this.timer.pt = this.pt;
   }
 

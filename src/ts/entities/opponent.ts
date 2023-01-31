@@ -221,6 +221,7 @@ export class Opponent extends Entity {
     super.move(dt);
 
     this.timer.position = this.position;
+    this.timer.velocity = this.velocity;
     this.timer.pt = this.pt;
   }
 
