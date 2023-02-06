@@ -3,6 +3,8 @@ import { C, Game } from "./main";
 import { Obstacle } from "./obstacle";
 import { Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
 
+const AXIS_SHRINK = 1e5;
+
 export class Entity {
   readonly id: string;
   /**
@@ -105,13 +107,17 @@ export class Entity {
     this.ctx.translate(origin.x, origin.y)
 
     // Relativistic distortion
-    const relVel = this.velocity.boost(invVel);
-    const relOrigin = relPos.boost(relVel);
-    const relScaleX = relPos.plus(vec3(0, 1, 0)).boost(relVel).minus(relOrigin);
-    const relScaleY = relPos.plus(vec3(0, 0, 1)).boost(relVel).minus(relOrigin);
+    const xEps = lightConeIntersection(
+      playerPos, this.position.plus(vec3(0, 1 / AXIS_SHRINK, 0).boost(this.velocity)), this.velocity
+    );
+    const yEps = lightConeIntersection(
+      playerPos, this.position.plus(vec3(0, 0, 1 / AXIS_SHRINK).boost(this.velocity)), this.velocity
+    );
+    const relScaleX = xEps.minus(playerPos).boost(invVel).minus(origin);
+    const relScaleY = yEps.minus(playerPos).boost(invVel).minus(origin);
     this.ctx.transform(
-      relScaleX.x, relScaleX.y,
-      relScaleY.x, relScaleY.y,
+      relScaleX.x * AXIS_SHRINK, relScaleX.y * AXIS_SHRINK,
+      relScaleY.x * AXIS_SHRINK, relScaleY.y * AXIS_SHRINK,
       0, 0,
     );
 
