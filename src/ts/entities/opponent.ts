@@ -27,7 +27,7 @@ export class Opponent extends Entity {
   constructor(game: Game, id: string) {
     super(game, id);
     this.acceleration = 2.0;
-    this.range = 150 * PX;
+    this.range = 3.0;  // times scale
     this.attackDuration = 200;
     this.blockDuration = 300;
     this.cooldownDuration = 800;
@@ -226,9 +226,9 @@ export class Opponent extends Entity {
   }
 
   private turn(): void {
-    const orientationTarget = this.game.player.position || vec3(0, 0, 0);
-    const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
-    this.orientation = angle;
+    // const orientationTarget = this.game.player.position || vec3(0, 0, 0);
+    // const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
+    // this.orientation = angle;
   }
 
   private attack(): void {
@@ -255,8 +255,8 @@ export class Opponent extends Entity {
     return rotate(
       {
         a: vec2(this.position.x - this.scale.x, this.position.y - this.scale.y),
-        b: vec2(this.position.x + this.scale.x + this.range, this.position.y - this.scale.y),
-        c: vec2(this.position.x + this.scale.x + this.range, this.position.y + this.scale.y),
+        b: vec2(this.position.x + this.scale.x * (1 + this.range), this.position.y - this.scale.y),
+        c: vec2(this.position.x + this.scale.x * (1 + this.range), this.position.y + this.scale.y),
         d: vec2(this.position.x - this.scale.x, this.position.y + this.scale.y),
       },
       this.orientation,
@@ -354,22 +354,18 @@ export class Opponent extends Entity {
       this.ctx.beginPath();
       this.ctx.arc(0, 0, 0.4, 0, 2 * Math.PI);
       this.ctx.fill();
-    })
 
-    if (this.action.attacking && this.active) {
-      this.drawWorld(() => {
-        const weaponPosition = this.getWeaponPosition();
+      if (this.action.attacking && this.active) {
+        // weapon
         this.ctx.fillStyle = "#ff0000";
-        this.ctx.moveTo(weaponPosition.a.x, weaponPosition.a.y);
         this.ctx.beginPath();
-        this.ctx.lineTo(weaponPosition.b.x, weaponPosition.b.y);
-        this.ctx.lineTo(weaponPosition.c.x, weaponPosition.c.y);
-        this.ctx.lineTo(weaponPosition.d.x, weaponPosition.d.y);
-        this.ctx.lineTo(weaponPosition.a.x, weaponPosition.a.y);
-        this.ctx.closePath();
+        this.ctx.moveTo(-1, -1);
+        this.ctx.lineTo(1 + this.range, -1);
+        this.ctx.lineTo(1 + this.range, 1);
+        this.ctx.lineTo(-1, 1);
         this.ctx.fill();
-      });
-    }
+      }
+    });
   }
 
   protected initialize(): void {

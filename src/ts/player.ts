@@ -30,7 +30,7 @@ export class Player extends Entity {
     this.position = vec3(0, 0, 0);
     this.scale = vec2(100 * PX, 100 * PX);
     this.acceleration = 2.0;
-    this.range = 150 * PX;
+    this.range = 1.5;
     this.attackDuration = 200;
     this.blockDuration = 300;
     this.cooldownDuration = 800;
@@ -357,22 +357,18 @@ export class Player extends Entity {
       this.ctx.lineTo(-0.5, 0);
       this.ctx.closePath();
       this.ctx.fill("evenodd");
-    })
 
-    if (this.action.attacking && this.active) {
-      this.drawWorld(() => {
-        const weaponPosition = this.getWeaponPosition();
+      if (this.action.attacking && this.active) {
+        // weapon
         this.ctx.fillStyle = "#ff0000";
-        this.ctx.moveTo(weaponPosition.a.x, weaponPosition.a.y);
         this.ctx.beginPath();
-        this.ctx.lineTo(weaponPosition.b.x, weaponPosition.b.y);
-        this.ctx.lineTo(weaponPosition.c.x, weaponPosition.c.y);
-        this.ctx.lineTo(weaponPosition.d.x, weaponPosition.d.y);
-        this.ctx.lineTo(weaponPosition.a.x, weaponPosition.a.y);
-        this.ctx.closePath();
+        this.ctx.moveTo(-1, -1);
+        this.ctx.lineTo(1 + this.range, -1);
+        this.ctx.lineTo(1 + this.range, 1);
+        this.ctx.lineTo(-1, 1);
         this.ctx.fill();
-      });
-    }
+      }
+    });
   }
 
   protected initialize(): void {

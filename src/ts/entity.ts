@@ -89,47 +89,35 @@ export class Entity {
 
   /** Execute `draw` with the context transformed into entity-relative coordinates */
   protected drawLocal(draw: () => void): void {
-    const { position: playerPos, velocity: playerVel } = this.game.player;
-    this.drawWorld(() => {
-      this.ctx.save();
-
-      const relPos = this.position.minus(playerPos);
-      const relVel = playerVel.inv().boost(this.velocity);
-      const o = relPos.boost(relVel).plus(playerPos);
-      this.ctx.translate(o.x, o.y);
-      this.ctx.rotate(this.orientation);
-      this.ctx.scale(this.scale.x, this.scale.y);
-
-      draw();
-
-      this.ctx.restore();
-    })
-  }
-
-  /**
-   * Execute `draw` with the context transformed into camera-relative
-   * coordinates. Note that since drawing commands are 2D and don't allow
-   * specifying a t coordinate, this can't be fully general; it assumes the t
-   * coordinate is equal to that of this entity. That means in practice that
-   * world-relative coordinates should be close to the origin of the entity's
-   * coordinate system.
-   */
-  protected drawWorld(draw: () => void): void {
     this.ctx.save();
 
-    // screen-center coordinates
+    // Screen-center coordinates
     const { width, height } = this.ctx.canvas;
     this.ctx.translate(width / 2, height / 2);
     // -y for right-hand coordinate system
     this.ctx.scale(C, -C);
-    // camera position
+
+    // Camera position
     const { position: playerPos, velocity: playerVel } = this.game.player;
     const relPos = this.position.minus(playerPos);
-    const relVel = this.velocity.boost(playerVel.inv());
-    const o = relPos.boost(relVel);
-    const vx = relPos.plus(vec3(0, 1, 0)).boost(relVel).minus(o);
-    const vy = relPos.plus(vec3(0, 0, 1)).boost(relVel).minus(o);
-    this.ctx.transform(vx.x, vx.y, vy.x, vy.y, -playerPos.x, -playerPos.y);
+    const invVel = playerVel.inv()
+    const origin = relPos.boost(invVel);
+    this.ctx.translate(origin.x, origin.y)
+
+    // Relativistic distortion
+    const relVel = this.velocity.boost(invVel);
+    const relOrigin = relPos.boost(relVel);
+    const relScaleX = relPos.plus(vec3(0, 1, 0)).boost(relVel).minus(relOrigin);
+    const relScaleY = relPos.plus(vec3(0, 0, 1)).boost(relVel).minus(relOrigin);
+    this.ctx.transform(
+      relScaleX.x, relScaleX.y,
+      relScaleY.x, relScaleY.y,
+      0, 0,
+    );
+
+    // Entity rotation and scaling
+    this.ctx.rotate(this.orientation);
+    this.ctx.scale(this.scale.x, this.scale.y);
 
     draw();
 
