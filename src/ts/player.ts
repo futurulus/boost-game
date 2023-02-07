@@ -8,6 +8,8 @@ import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, ve
 import { clamp, rotate } from "./util";
 import { Timer } from "./entities/timer";
 
+export type CameraMode = "visual" | "now" | "future";
+
 export class Player extends Entity {
   action: {
     movingX: number;
@@ -16,6 +18,7 @@ export class Player extends Entity {
     blocking: boolean;
     cooldown: boolean;
   };
+  cameraMode: CameraMode;
 
   private acceleration: number;
   private maxVelocity: number;
@@ -42,6 +45,7 @@ export class Player extends Entity {
       blocking: false,
       cooldown: false,
     };
+    this.cameraMode = "visual";
     this.timer = new Timer(this.game, 'playerTimer');
 
     this.registerControls();
