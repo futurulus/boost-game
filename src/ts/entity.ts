@@ -1,4 +1,4 @@
-import { lightConeIntersection } from "./geometry";
+import { lightConeIntersection, nowIntersection } from "./geometry";
 import { C, Game } from "./main";
 import { Obstacle } from "./obstacle";
 import { Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
@@ -71,7 +71,7 @@ export class Entity {
   protected move(dt: number): void {
     const { position: oldPosition, velocity } = this;
     const { player } = this.game;
-    this.position = lightConeIntersection(player.position, oldPosition, velocity);
+    this.position = lightConeIntersection(oldPosition, velocity, player.position);
     this.pt += (this.position.t - oldPosition.t) / velocity.t;
 
     if (this.obstacle !== undefined) {
@@ -100,19 +100,24 @@ export class Entity {
     this.ctx.scale(C, -C);
 
     // Camera position
-    const { position: playerPos, velocity: playerVel } = this.game.player;
-    const relPos = this.position.minus(playerPos);
+    const { position: playerPos, velocity: playerVel, cameraMode } = this.game.player;
+    const intersection = (pos: Vec3): Vec3 => (
+      cameraMode === "visual"
+        ? lightConeIntersection(pos, this.velocity, playerPos)
+        : cameraMode === "now"
+        ? nowIntersection(pos, this.velocity, playerPos, playerVel)
+        : lightConeIntersection(pos, this.velocity, playerPos, "future")
+    );
+
+    const viewPos = intersection(this.position);
+    const relPos = viewPos.minus(playerPos);
     const invVel = playerVel.inv()
     const origin = relPos.boost(invVel);
     this.ctx.translate(origin.x, origin.y)
 
     // Relativistic distortion
-    const xEps = lightConeIntersection(
-      playerPos, this.position.plus(vec3(0, 1 / AXIS_SHRINK, 0).boost(this.velocity)), this.velocity
-    );
-    const yEps = lightConeIntersection(
-      playerPos, this.position.plus(vec3(0, 0, 1 / AXIS_SHRINK).boost(this.velocity)), this.velocity
-    );
+    const xEps = intersection(this.position.plus(vec3(0, 1 / AXIS_SHRINK, 0).boost(this.velocity)));
+    const yEps = intersection(this.position.plus(vec3(0, 0, 1 / AXIS_SHRINK).boost(this.velocity)));
     const relScaleX = xEps.minus(playerPos).boost(invVel).minus(origin);
     const relScaleY = yEps.minus(playerPos).boost(invVel).minus(origin);
     this.ctx.transform(
