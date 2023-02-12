@@ -3,10 +3,11 @@ import { Polygon, Vector } from "collider2d";
 import config from "../../config.json" assert { type: "json" };
 import { Entity } from "./entity";
 import { Opponent } from "./entities/opponent";
-import { Game, PX } from "./main";
-import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, vec2, vec3 } from "./types";
+import { C, Game, PX } from "./main";
+import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, Vec2, vec2, Vec3, vec3 } from "./types";
 import { clamp, rotate } from "./util";
 import { Timer } from "./entities/timer";
+import { getMousePos } from "./gui";
 
 export type CameraMode = "visual" | "now" | "future";
 
@@ -17,6 +18,7 @@ export class Player extends Entity {
     attacking: boolean;
     blocking: boolean;
     cooldown: boolean;
+    plannedBoost: Vec2 | null;
   };
   cameraMode: CameraMode;
 
@@ -44,6 +46,7 @@ export class Player extends Entity {
       attacking: false,
       blocking: false,
       cooldown: false,
+      plannedBoost: null,
     };
     this.cameraMode = "visual";
     this.timer = new Timer(this.game, 'playerTimer');
@@ -174,6 +177,28 @@ export class Player extends Entity {
         }
       });
     });
+
+    this.ctx.canvas.addEventListener("mousedown", (event: MouseEvent) => {
+      const mousePos = getMousePos(event.clientX, event.clientY, this.ctx, "world");
+      if (mousePos.mag() < this.scale.x) {
+        this.action.plannedBoost = mousePos;
+      }
+    });
+
+    this.ctx.canvas.addEventListener("mousemove", (event: MouseEvent) => {
+      if (this.action.plannedBoost === null) return;
+
+      const mousePos = getMousePos(event.clientX, event.clientY, this.ctx, "world");
+      this.action.plannedBoost = mousePos;
+    });
+
+    this.ctx.canvas.addEventListener("mouseup", (event: MouseEvent) => {
+      if (this.action.plannedBoost === null) return;
+      console.log(this.action.plannedBoost);
+      this.velocity = this.screenToBoost(this.action.plannedBoost).boost(this.velocity);
+      console.log(this.velocity);
+      this.action.plannedBoost = null;
+    });
   }
 
   private captureEvent(event: KeyboardEvent): void {
@@ -188,6 +213,14 @@ export class Player extends Entity {
   public setActive(active: boolean): void {
     this.reset();
     super.setActive(active);
+  }
+
+  private screenToBoost(screen: Vec2): Vec3 {
+    // 4 orders of magnitude from 0.001 (0.1¢) to 10.0 (1000¢) over 1000PX
+    const screenMag = screen.mag();
+    if (screenMag === 0) return vec3(1, 0, 0);
+    const boostMag = 0.001 * Math.pow(1e4, screenMag / (1000 * PX));
+    return screen.times(boostMag / screenMag).spaceToVel3();
   }
 
   private collide(): void {
@@ -210,7 +243,7 @@ export class Player extends Entity {
 
   protected move(dt: number): void {
     const { action } = this;
-    const reduction = Math.pow(0.8, dt * 60);
+    const reduction = 1.0;  // Math.pow(0.8, dt * 60);
     const newVelX = clamp(
       action.movingX ? this.velocity.x + action.movingX * this.acceleration * dt : this.velocity.x * reduction,
       this.maxVelocity * -1,
@@ -373,6 +406,25 @@ export class Player extends Entity {
         this.ctx.fill();
       }
     });
+
+    if (this.action.plannedBoost !== null) {
+      const { x, y } = this.action.plannedBoost;
+
+      this.ctx.save();
+
+      const { width, height } = this.ctx.canvas;
+      this.ctx.translate(width / 2, height / 2);
+      this.ctx.scale(C, -C);
+
+      this.ctx.strokeStyle = "green";
+      this.ctx.lineWidth = 2 * PX;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, 0);
+      this.ctx.lineTo(x, y);
+      this.ctx.stroke();
+
+      this.ctx.restore();
+    }
   }
 
   protected initialize(): void {

@@ -1,12 +1,29 @@
 import config from "../../config.json" assert { type: "json" };
+import { PX } from "./main";
 import { Player } from "./player";
-import { vec2 } from "./types";
+import { Vec2, vec2 } from "./types";
 import { CircleButton } from "./ui/button";
 
 const BUTTON = {
   scale: 40,
   radius: 0.75,
   lineWidth: 4,
+}
+
+export const getMousePos = (
+  x: number, y: number, ctx: CanvasRenderingContext2D, mode: "canvas" | "world" = "canvas"
+): Vec2 => {
+  // https://stackoverflow.com/a/17130415
+  const { canvas } = ctx;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const canvasPos = vec2((x - rect.left) * scaleX, (y - rect.top) * scaleY);
+  if (mode === "canvas") return canvasPos;
+
+  const { width, height } = canvas;
+  const invPos = canvasPos.minus(vec2(width * 0.5, height * 0.5)).times(PX);
+  return vec2(invPos.x, -invPos.y);
 }
 
 export class Gui {

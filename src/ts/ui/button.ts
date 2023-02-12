@@ -1,3 +1,4 @@
+import { getMousePos } from "../gui";
 import { vec2, Vec2 } from "../types";
 
 type Props = {
@@ -30,18 +31,9 @@ export class CircleButton {
 
   onClick(e: MouseEvent) {
     const { ctx, onclick } = this.props;
-    const { x, y } = this.getMousePos(e.clientX, e.clientY);
+    const { x, y } = getMousePos(e.clientX, e.clientY, ctx);
     if (!ctx.isPointInPath(this.hitPath, x, y)) return;
     onclick();
-  }
-
-  getMousePos(x: number, y: number): Vec2 {
-    // https://stackoverflow.com/a/17130415
-    const { canvas } = this.props.ctx;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return vec2((x - rect.left) * scaleX, (y - rect.top) * scaleY);
   }
 
   draw() {
