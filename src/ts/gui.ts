@@ -3,6 +3,7 @@ import { PX } from "./main";
 import { Player } from "./player";
 import { Vec2, vec2 } from "./types";
 import { CircleButton } from "./ui/button";
+import { BoostHud } from "./ui/hud";
 
 const BUTTON = {
   scale: 40,
@@ -33,6 +34,7 @@ export class Gui {
   private visualButton: CircleButton;
   private nowButton: CircleButton;
   private futureButton: CircleButton;
+  private boostHud: BoostHud;
 
   constructor(ctx: CanvasRenderingContext2D, player: Player, players: number) {
     this.ctx = ctx;
@@ -68,6 +70,7 @@ export class Gui {
       isSelected: () => this.player.cameraMode === "future",
       onclick: () => { this.player.cameraMode = "future"; },
     });
+    this.boostHud = new BoostHud(ctx, player);
 
     this.ctx.canvas.addEventListener("tick", () => {
       this.draw();

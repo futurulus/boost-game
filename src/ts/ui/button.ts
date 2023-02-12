@@ -1,5 +1,5 @@
 import { getMousePos } from "../gui";
-import { vec2, Vec2 } from "../types";
+import { Vec2 } from "../types";
 
 type Props = {
   ctx: CanvasRenderingContext2D;
