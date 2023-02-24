@@ -14,16 +14,14 @@ export class Vec2 {
 
   /**
    * @returns Relativistic velocity sum: the overall measured velocity of an
-   * object with velocity equal to this vector in the local frame of reference,
-   * seen from a global frame of reference in which the local frame of reference
+   * object with velocity equal to this vector in frame of reference B,
+   * seen from a frame of reference A in which the frame of reference B
    * is moving with velocity `reference`. Vec2 objects are interpreted as
    * coordinate velocity, Vec3 as three-velocity (in all cases in units where c
    * = 1).
    *
    * Caution: relativistic velocity addition is **neither commutative nor
-   * associative**. Both order and grouping matter; in general, `v2.boost(v1)`
-   * will have the same magnitude as `v1.boost(v2)` but be rotated by some
-   * angle.
+   * associative**. See the docs for `Vec3.boost` for more.
    */
   boost(reference: Vec2 | Vec3): Vec2 {
     if (reference instanceof Vec3) reference = reference.vel2();
@@ -97,22 +95,33 @@ export class Vec3 {
   times(scale: number): Vec3 { return new Vec3(this.t * scale, this.x * scale, this.y * scale); }
 
   /**
-   * @returns Active Lorentz boost: transforms this three-vector from the local
-   * frame of reference to a global frame of reference in which the local frame
-   * of reference is moving with velocity `reference`. A Vec2 object for
-   * `reference` is interpreted as coordinate velocity, Vec3 as three-velocity
-   * (in all cases in units where c = 1).
+   * @returns Active Lorentz boost: transforms this three-vector from frame of
+   * reference B to a frame of reference A in which frame B is moving with
+   * velocity `reference`. A Vec2 object for `reference` is interpreted as
+   * coordinate velocity, Vec3 as three-velocity (in all cases in units where c
+   * = 1).
    *
    * Since three-velocities are three-vectors, this can also be used as a
    * relativistic velocity sum, like the method of the same name on Vec2: the
    * overall measured (three-)velocity of an object with this velocity in the
-   * local frame has a three-velocity of this.boost(reference) in the global
-   * frame.
+   * frame B has a three-velocity of `this.boost(reference)` in frame A.
    *
    * Caution: relativistic velocity addition is **neither commutative nor
    * associative**. Both order and grouping matter; in general, `v2.boost(v1)`
    * will have the same velocity magnitude as `v1.boost(v2)` but be spatially
-   * rotated by some angle.
+   * rotated by some angle. This also means that if more than two frames of
+   * reference are involved, you may need to perform more than one `boost`; the
+   * composition of two boosts is not necessarily a boost, but in general is
+   * rather a boost **followed by a rotation**.
+   *
+   * Some rules of thumb for figuring out which order and sign to use:
+   *
+   *   - The vector being transformed goes on the left, the relative velocity
+   *     of the frames of reference on the right; `v.boost(r)`.
+   *   - `v.boost(r)` is analogous to addition, so if you expect something like
+   *     subtraction, you usually want `v.boost(r.inv())` instead. (Needing the
+   *     opposite frame of reference transformation is more common than needing
+   *     the opposite vector.)
    */
   boost(reference: Vec2 | Vec3): Vec3 {
     if (reference instanceof Vec2) reference = reference.vel3();

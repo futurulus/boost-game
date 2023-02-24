@@ -1,5 +1,5 @@
 import config from "../../config.json" assert { type: "json" };
-import { PX } from "./main";
+import { Game, PX } from "./main";
 import { Player } from "./player";
 import { Vec2, vec2 } from "./types";
 import { CircleButton } from "./ui/button";
@@ -36,9 +36,10 @@ export class Gui {
   private futureButton: CircleButton;
   private boostHud: BoostHud;
 
-  constructor(ctx: CanvasRenderingContext2D, player: Player, players: number) {
-    this.ctx = ctx;
-    this.player = player;
+  constructor(game: Game, players: number) {
+    const { ctx, player, entities } = game;
+    this.ctx = game.ctx;
+    this.player = game.player;
     this.score = [];
     this.score.length = players;
     this.score.fill(0);
@@ -70,7 +71,7 @@ export class Gui {
       isSelected: () => this.player.cameraMode === "future",
       onclick: () => { this.player.cameraMode = "future"; },
     });
-    this.boostHud = new BoostHud(ctx, player);
+    this.boostHud = new BoostHud(ctx, player, entities);
 
     this.ctx.canvas.addEventListener("tick", () => {
       this.draw();

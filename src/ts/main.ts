@@ -66,7 +66,7 @@ export class Game {
     this.gamepadAdapter = new GamepadAdapter(this.ctx);
 
     this.countdown = new Countdown(this.ctx);
-    this.gui = new Gui(this.ctx, this.player, 2);
+    this.gui = new Gui(this, 2);
 
     this.renderer = new Renderer(this.ctx);
 
