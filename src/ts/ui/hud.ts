@@ -4,6 +4,8 @@ import { C, PX } from "../main";
 import { Player } from "../player";
 import { vec2, Vec2, vec3, Vec3 } from "../types";
 
+const ARROW_RADIUS = 10;
+
 export class BoostHud {
   private ctx: CanvasRenderingContext2D
   private player: Player;
@@ -55,34 +57,52 @@ export class BoostHud {
 
   draw() {
     if (this.player.action.plannedBoost !== null) {
-      const { x, y } = this.player.action.plannedBoost;
-
       this.ctx.save();
 
       const { width, height } = this.ctx.canvas;
       this.ctx.translate(width / 2, height / 2);
       this.ctx.scale(C, -C);
 
-      this.ctx.strokeStyle = "#0f0";
+      this.ctx.fillStyle = "rgba(0, 127, 255, 0.5)";
       this.ctx.lineWidth = 2 * PX;
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, 0);
-      this.ctx.lineTo(x, y);
-      this.ctx.stroke();
+      this.drawArrow(vec2(0, 0), this.player.action.plannedBoost);
 
-      this.ctx.strokeStyle = "#f00";
+      this.ctx.fillStyle = "rgba(255, 127, 0, 0.5)";
 
       const plannedVel = this.screenToBoost(this.player.action.plannedBoost)
         .boost(this.player.velocity);
-      this.entities.forEach(e => {
-        const { x: ex, y: ey } = this.boostToScreen(e.velocity.boost(plannedVel.inv()));
-        this.ctx.beginPath();
-        this.ctx.moveTo(e.position.x, e.position.y);
-        this.ctx.lineTo(e.position.x + ex, e.position.y + ey);
-        this.ctx.stroke();
+      this.entities.forEach(e => {;
+        const entityVel = this.boostToScreen(e.velocity.boost(plannedVel.inv()));
+        this.drawArrow(e.position.space(), e.position.space().plus(entityVel));
       })
 
       this.ctx.restore();
     }
+  }
+
+  drawArrow(start: Vec2, end: Vec2) {
+    const radius = ARROW_RADIUS * PX;
+    const diff = end.minus(start);
+    const lengthSq = diff.magSq();
+    if (lengthSq <= radius * radius) {
+      // Too short for arrow, just draw a circle
+      this.ctx.beginPath();
+      this.ctx.arc(start.x, start.y, radius, 0, 2 * Math.PI)
+      this.ctx.fill();
+      return;
+    }
+
+    //   x
+    //   |\ L
+    //   +-O
+    // 90° ha
+    //    R
+    const direction = Math.atan2(diff.y, diff.x);
+    const halfAngle = Math.acos(radius / Math.sqrt(lengthSq));
+    this.ctx.beginPath();
+    this.ctx.arc(start.x, start.y, radius, direction + halfAngle, direction - halfAngle);
+    this.ctx.lineTo(end.x, end.y);
+    this.ctx.closePath();
+    this.ctx.fill();
   }
 }
