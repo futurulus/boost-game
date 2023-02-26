@@ -8,16 +8,6 @@ const AXIS_SHRINK = 1e5;
 export class Entity {
   readonly id: string;
   /**
-   * Position in spacetime at the moment of intersecting the player's backward
-   * light cone
-   */
-  position: Vec3;
-  /**
-   * Three-velocity (https://en.wikipedia.org/wiki/Four-velocity) at the moment
-   * of intersecting the player's backward light cone
-   */
-  velocity: Vec3;
-  /**
    * Proper time for this entity at the moment of intersecting the player's
    * backward light cone
    */
@@ -25,6 +15,16 @@ export class Entity {
   scale: Vec2;
   orientation: number;
   obstacle?: Obstacle;
+
+  // position and velocity are properties for caching of lightcone intersections
+  private _position: Vec3;
+  private _velocity: Vec3;
+  private cachedPosition: {
+    visual?: Vec3;
+    now?: Vec3;
+    future?: Vec3;
+    view?: Vec3;
+  };
 
   protected game: Game;
   protected ctx: CanvasRenderingContext2D;
@@ -36,11 +36,12 @@ export class Entity {
     this.active = false;
 
     this.id = id;
-    this.position = vec3(0, 0, 0);
-    this.velocity = vec3(1, 0, 0);
     this.scale = vec2(1, 1);
     this.orientation = 0;
     this.pt = 0;
+    this._position = vec3(0, 0, 0);
+    this._velocity = vec3(1, 0, 0);
+    this.cachedPosition = {};
 
     window.requestAnimationFrame(() => {
       this.initialize();
@@ -66,6 +67,62 @@ export class Entity {
     }
 
     this.move(0);
+  }
+
+  /**
+   * Position in spacetime at the moment of intersecting the player's backward
+   * light cone
+   */
+  get position(): Vec3 {
+    return this._position;
+  }
+  set position(_position: Vec3) {
+    this._position = _position;
+    this.cachedPosition = {};
+  }
+
+  /**
+   * Three-velocity (https://en.wikipedia.org/wiki/Four-velocity) at the moment
+   * of intersecting the player's backward light cone
+   */
+  get velocity(): Vec3 {
+    return this._velocity;
+  }
+  set velocity(_velocity: Vec3) {
+    this._velocity = _velocity;
+    // positions are light cone intersections and can change with velocity as well
+    this.cachedPosition = {};
+  }
+
+  get visualPosition(): Vec3 {
+    if (this.cachedPosition.visual !== undefined) return this.cachedPosition.visual;
+    const p = lightConeIntersection(this.position, this.velocity, this.game.player.position);
+    this.cachedPosition.visual = p;
+    return p;
+  }
+  get nowPosition(): Vec3 {
+    if (this.cachedPosition.now !== undefined) return this.cachedPosition.now;
+    const p = nowIntersection(this.position, this.velocity, this.game.player.position, this.game.player.velocity);
+    this.cachedPosition.now = p;
+    return p;
+  }
+  get futurePosition(): Vec3 {
+    if (this.cachedPosition.future !== undefined) return this.cachedPosition.future;
+    const p = lightConeIntersection(this.position, this.velocity, this.game.player.position, "future");
+    this.cachedPosition.future = p;
+    return p;
+  }
+  get viewPosition(): Vec3 {
+    if (this.cachedPosition.view !== undefined) return this.cachedPosition.view;
+    const { cameraMode, position: playerPos, velocity: playerVel } = this.game.player;
+    const absPosition = cameraMode === "visual"
+        ? this.visualPosition
+        : cameraMode === "now"
+        ? this.nowPosition
+        : this.futurePosition;  // use properties to take advantage of caching
+    const p = absPosition.minus(playerPos).boost(playerVel.inv());
+    this.cachedPosition.view = p;
+    return p;
   }
 
   protected move(dt: number): void {
@@ -101,6 +158,10 @@ export class Entity {
 
     // Camera position
     const { position: playerPos, velocity: playerVel, cameraMode } = this.game.player;
+    const viewPos = this.viewPosition;
+    this.ctx.translate(viewPos.x, viewPos.y)
+
+    // Relativistic distortion
     const intersection = (pos: Vec3): Vec3 => (
       cameraMode === "visual"
         ? lightConeIntersection(pos, this.velocity, playerPos)
@@ -108,18 +169,11 @@ export class Entity {
         ? nowIntersection(pos, this.velocity, playerPos, playerVel)
         : lightConeIntersection(pos, this.velocity, playerPos, "future")
     );
-
-    const viewPos = intersection(this.position);
-    const relPos = viewPos.minus(playerPos);
-    const invVel = playerVel.inv()
-    const origin = relPos.boost(invVel);
-    this.ctx.translate(origin.x, origin.y)
-
-    // Relativistic distortion
     const xEps = intersection(this.position.plus(vec3(0, 1 / AXIS_SHRINK, 0).boost(this.velocity)));
     const yEps = intersection(this.position.plus(vec3(0, 0, 1 / AXIS_SHRINK).boost(this.velocity)));
-    const relScaleX = xEps.minus(playerPos).boost(invVel).minus(origin);
-    const relScaleY = yEps.minus(playerPos).boost(invVel).minus(origin);
+    const invVel = playerVel.inv();
+    const relScaleX = xEps.minus(playerPos).boost(invVel).minus(viewPos);
+    const relScaleY = yEps.minus(playerPos).boost(invVel).minus(viewPos);
     this.ctx.transform(
       relScaleX.x * AXIS_SHRINK, relScaleX.y * AXIS_SHRINK,
       relScaleY.x * AXIS_SHRINK, relScaleY.y * AXIS_SHRINK,

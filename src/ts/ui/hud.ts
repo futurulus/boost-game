@@ -73,7 +73,8 @@ export class BoostHud {
         .boost(this.player.velocity);
       this.entities.forEach(e => {;
         const entityVel = this.boostToScreen(e.velocity.boost(plannedVel.inv()));
-        this.drawArrow(e.position.space(), e.position.space().plus(entityVel));
+        const entityPos = e.viewPosition.space();
+        this.drawArrow(entityPos, entityPos.plus(entityVel));
       })
 
       this.ctx.restore();
