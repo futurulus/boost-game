@@ -5,6 +5,8 @@ import { Player } from "../player";
 import { vec2, Vec2, vec3, Vec3 } from "../types";
 
 const ARROW_RADIUS = 10;
+const MAX_SCREEN_BOOST = 400;
+const MAX_BOOST = 1.0;
 
 export class BoostHud {
   private ctx: CanvasRenderingContext2D
@@ -19,7 +21,7 @@ export class BoostHud {
     ctx.canvas.addEventListener("mousedown", (event: MouseEvent) => {
       const mousePos = getMousePos(event.clientX, event.clientY, this.ctx, "world");
       if (mousePos.mag() < player.scale.x) {
-        this.player.action.plannedBoost = mousePos;
+        this.player.action.plannedBoost = this.clipPlannedBoost(mousePos);
       }
     });
 
@@ -27,7 +29,7 @@ export class BoostHud {
       if (this.player.action.plannedBoost === null) return;
 
       const mousePos = getMousePos(event.clientX, event.clientY, this.ctx, "world");
-      this.player.action.plannedBoost = mousePos;
+      this.player.action.plannedBoost = this.clipPlannedBoost(mousePos);
     });
 
     ctx.canvas.addEventListener("mouseup", (event: MouseEvent) => {
@@ -40,18 +42,24 @@ export class BoostHud {
     ctx.canvas.addEventListener("tick", () => this.draw());
   }
 
+  private clipPlannedBoost(screen: Vec2): Vec2 {
+    const mag = screen.mag();
+    return mag < MAX_SCREEN_BOOST * PX ? screen : screen.times(MAX_SCREEN_BOOST * PX / mag);
+  }
+
   private screenToBoost(screen: Vec2): Vec3 {
-    // 4 orders of magnitude from 0.001 (0.1¢) to 10.0 (1000¢) over 1000PX
     const screenMag = screen.mag();
     if (screenMag === 0) return vec3(1, 0, 0);
-    const boostMag = 0.001 * Math.pow(10, screenMag / (250 * PX));
+    // Max boost 1.0 (100¢) at 400PX, magnitude scales as square of the screen length
+    let boostMag = screenMag / (MAX_SCREEN_BOOST * PX);
+    boostMag = MAX_BOOST * boostMag * boostMag;
     return screen.times(boostMag / screenMag).spaceToVel3();
   }
 
   private boostToScreen(boost: Vec3): Vec2 {
     const boostMag = boost.space().mag();
-    if (boostMag <= 0.001) return vec2(0, 0);
-    const screenMag = Math.log10(boostMag / 0.001) * 250 * PX;
+    // b = B (s/S)^2  =>  s = S √(b/B)
+    const screenMag = Math.sqrt(boostMag / MAX_BOOST) * MAX_SCREEN_BOOST * PX;
     return boost.space().times(screenMag / boostMag);
   }
 
@@ -60,22 +68,29 @@ export class BoostHud {
       this.ctx.save();
 
       const { width, height } = this.ctx.canvas;
+      const { plannedBoost: screen } = this.player.action;
+      const plannedBoost = this.screenToBoost(screen);
+      const cents = plannedBoost.space().mag() * 100;
+      const decimalPlaces = cents < 2 ? 1 : 0;
+      const textPos = screen.plus(screen.times(30 * PX / screen.mag()));
+      this.ctx.fillStyle = "rgba(0, 127, 255, 0.5)";
+      this.ctx.font = "40px PressStart2P";
+      this.ctx.fillText(`${cents.toFixed(decimalPlaces)}¢`, width / 2 + textPos.x * C, height / 2 - textPos.y * C);
+
       this.ctx.translate(width / 2, height / 2);
       this.ctx.scale(C, -C);
 
-      this.ctx.fillStyle = "rgba(0, 127, 255, 0.5)";
       this.ctx.lineWidth = 2 * PX;
-      this.drawArrow(vec2(0, 0), this.player.action.plannedBoost);
+      this.drawArrow(vec2(0, 0), screen);
 
       this.ctx.fillStyle = "rgba(255, 127, 0, 0.5)";
 
-      const plannedVel = this.screenToBoost(this.player.action.plannedBoost)
-        .boost(this.player.velocity);
+      const plannedVel = plannedBoost.boost(this.player.velocity);
       this.entities.forEach(e => {;
-        const entityVel = this.boostToScreen(e.velocity.boost(plannedVel.inv()));
+        const entityVel = this.boostToScreen(e.velocity.boost(plannedVel.inv()).inv());
         const entityPos = e.viewPosition.space();
         this.drawArrow(entityPos, entityPos.plus(entityVel));
-      })
+      });
 
       this.ctx.restore();
     }

@@ -20,7 +20,7 @@ import { Timer } from "./entities/timer";
  * one light-second or 1000 pixels to the right on the X axis is represented by
  * `Vec2(1, 0)`. This constant is primarily used in core rendering code.
  */
-export const C = 2000;
+export const C = 1000;
 /**
  * One pixel, in light-seconds. Useful for when you want to specify something
  * in pixels: 300*PX is 300px.
