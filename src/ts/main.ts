@@ -7,10 +7,11 @@ import { Gui } from "./gui";
 import { GamepadAdapter } from "./gamepadAdapter";
 import { registerServiceWorker } from "./registerServiceWorker";
 import { showInstallButton } from "./showInstallButton";
-import { FinishEvent, vec3 } from "./types";
+import { FinishEvent, vec2, vec3 } from "./types";
 import { Entity } from "./entity";
 import { Opponent } from "./entities/opponent";
 import { Timer } from "./entities/timer";
+import { ReturnWall } from "./entities/returnWall";
 
 /**
  * Speed of light in canvas pixels per second.
@@ -36,6 +37,7 @@ export class Game {
   collider: Collider2d;
   obstacles: Obstacle[];
   player: Player;
+  opponent: Opponent;
   entities: Entity[];
   gamepadAdapter: GamepadAdapter;
   countdown: Countdown;
@@ -53,13 +55,18 @@ export class Game {
     this.entities = [];
 
     this.player = new Player(this);
-    const player2 = new Opponent(this, 'player2');
-    this.entities.push(player2);
+    this.opponent = new Opponent(this, 'player2');
+
+    for (let x = -250; x <= 250; x += 100) {
+      const topWall = new ReturnWall(this, 'topWall');
+      topWall.position = vec3(0, x * PX, 800 * PX);
+      topWall.scale = vec2(100 * PX, 5 * PX);
+    }
+
     for (let x = -600; x <= 600; x += 400) {
       for (let y = -600; y <= 600; y += 400) {
         const timer = new Timer(this, `t_${x}_${y}`);
-        timer.position = vec3(0, x / C, y / C);
-        this.entities.push(timer);
+        timer.position = vec3(0, x * PX, y * PX);
       }
     }
 

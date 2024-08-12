@@ -50,6 +50,8 @@ export class Entity {
     this.ctx.canvas.addEventListener("tick", (event: TickEvent) => {
       this.onNextTick(event);
     });
+
+    game.entities.push(this);
   }
 
   public setActive(active: boolean): void {
