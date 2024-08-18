@@ -12,7 +12,7 @@ const BUTTON = {
 }
 
 export const getMousePos = (
-  x: number, y: number, ctx: CanvasRenderingContext2D, mode: "canvas" | "world" = "canvas"
+  x: number, y: number, ctx: WebGLRenderingContext, mode: "canvas" | "world" = "canvas"
 ): Vec2 => {
   // https://stackoverflow.com/a/17130415
   const { canvas } = ctx;
@@ -28,7 +28,7 @@ export const getMousePos = (
 }
 
 export class Gui {
-  private ctx: CanvasRenderingContext2D;
+  private ctx: WebGLRenderingContext;
   private player: Player;
   private score: number[];
   private visualButton: CircleButton;
@@ -83,6 +83,7 @@ export class Gui {
   }
 
   draw() {
+    /*
     this.ctx.save();
     this.score.forEach((score, player) => {
       this.ctx.shadowColor = "rgba(0,0,0,0.3)";
@@ -95,9 +96,11 @@ export class Gui {
       this.ctx.fillText(score.toString(), this.ctx.canvas.width / 2 + (100 * (player === 0 ? -1 : 1)) / 2, 110);
     });
     this.ctx.restore();
+    */
   }
 
-  drawVisualButton(ctx: CanvasRenderingContext2D) {
+  drawVisualButton(ctx: WebGLRenderingContext) {
+    /*
     const rCosT = BUTTON.radius / Math.sqrt(2);
     ctx.lineWidth = BUTTON.lineWidth / BUTTON.scale;
     ctx.beginPath();
@@ -107,18 +110,22 @@ export class Gui {
     ctx.moveTo(BUTTON.radius, 0);
     ctx.arc(0, 0, BUTTON.radius, 0, 2 * Math.PI);
     ctx.stroke();
+    */
   }
 
-  drawNowButton(ctx: CanvasRenderingContext2D) {
+  drawNowButton(ctx: WebGLRenderingContext) {
+    /*
     ctx.lineWidth = BUTTON.lineWidth / BUTTON.scale;
     ctx.beginPath();
     ctx.moveTo(-BUTTON.radius, 0);
     ctx.lineTo(BUTTON.radius, 0);
     ctx.arc(0, 0, BUTTON.radius, 0, 2 * Math.PI);
     ctx.stroke();
+    */
   }
 
-  drawFutureButton(ctx: CanvasRenderingContext2D) {
+  drawFutureButton(ctx: WebGLRenderingContext) {
+    /*
     const rCosT = BUTTON.radius / Math.sqrt(2);
     ctx.lineWidth = BUTTON.lineWidth / BUTTON.scale;
     ctx.beginPath();
@@ -128,5 +135,6 @@ export class Gui {
     ctx.moveTo(BUTTON.radius, 0);
     ctx.arc(0, 0, BUTTON.radius, 0, 2 * Math.PI);
     ctx.stroke();
+    */
   }
 }

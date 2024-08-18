@@ -24,6 +24,7 @@ export class Timer extends Entity {
             const counterclockwiseOut = (this.pt / OUTER_ANGLE_PERIOD) % 1 > 0.5;
             const hueOut = ((this.pt / OUTER_HUE_PERIOD) % 1) * 360;
 
+            /*
             this.ctx.rotate(Math.PI / 2);
 
             // Inner ticker
@@ -47,6 +48,7 @@ export class Timer extends Entity {
             this.ctx.lineTo(1, 0);
             this.ctx.closePath();
             this.ctx.fill();
+            */
         })
     }
 }

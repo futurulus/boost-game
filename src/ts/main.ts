@@ -33,7 +33,7 @@ export const C = 1000;
 export const PX = 1 / C;
 
 export class Game {
-  ctx: CanvasRenderingContext2D;
+  ctx: WebGLRenderingContext;
   collider: Collider2d;
   obstacles: Obstacle[];
   player: Player;
@@ -45,11 +45,11 @@ export class Game {
   renderer: Renderer;
 
   constructor(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("webgl");
     if (ctx === null) throw new Error("Can't get context from canvas!");
 
     this.ctx = ctx;
-    this.ctx.canvas.classList.add("fade-in");
+    canvas.classList.add("fade-in");
     this.collider = new Collider2d();
     this.obstacles = [];
     this.entities = [];

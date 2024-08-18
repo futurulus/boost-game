@@ -2,11 +2,11 @@ import { getMousePos } from "../gui";
 import { Vec2 } from "../types";
 
 type Props = {
-  ctx: CanvasRenderingContext2D;
+  ctx: WebGLRenderingContext;
   position: Vec2;
   scale: Vec2;
   color: string;
-  draw: (ctx: CanvasRenderingContext2D) => void;
+  draw: (ctx: WebGLRenderingContext) => void;
   isSelected: () => boolean;
   onclick: () => void;
 }
@@ -38,6 +38,7 @@ export class CircleButton {
 
   draw() {
     const { ctx, position, scale, color, draw, isSelected } = this.props;
+    /*
 
     const selected = isSelected();
     if (selected) {
@@ -52,7 +53,10 @@ export class CircleButton {
     ctx.save();
     ctx.translate(position.x, position.y);
     ctx.scale(scale.x, scale.y);
+    */
     draw(ctx);
+    /*
     ctx.restore();
+    */
   }
 }

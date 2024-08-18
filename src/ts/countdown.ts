@@ -1,7 +1,7 @@
 import { hexToRGB } from "./util";
 
 export class Countdown {
-  ctx: CanvasRenderingContext2D;
+  ctx: WebGLRenderingContext;
   interval: number;
   intervalLength: number;
   intervalCount: number;
@@ -9,7 +9,7 @@ export class Countdown {
   flashColor: string;
   flashOpacity: number;
 
-  constructor(ctx: CanvasRenderingContext2D) {
+  constructor(ctx: WebGLRenderingContext) {
     this.ctx = ctx;
     this.interval = 0;
     this.intervalLength = 650;
@@ -54,6 +54,7 @@ export class Countdown {
       return;
     }
 
+    /*
     this.ctx.save();
     const flashRgb = hexToRGB(this.flashColor);
     this.ctx.fillStyle = `rgba(${flashRgb.r},${flashRgb.g},${flashRgb.b},${this.flashOpacity})`;
@@ -74,6 +75,7 @@ export class Countdown {
       this.ctx.canvas.height / 2 + 100
     );
     this.ctx.restore();
+    */
 
     this.flashOpacity = Math.max(this.flashOpacity - 0.01, 0);
   }

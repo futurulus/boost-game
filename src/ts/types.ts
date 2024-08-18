@@ -243,7 +243,7 @@ export type ThemeConfig = {
     block: SpriteSet; // player when blocking, 100x100
   }[]; // provide sprites for each player, else player 1 sprites will be re-used
   turnSprites?: boolean;
-  shader?: (CanvasRenderingContext2D) => void;
+  shader?: (ctx: WebGLRenderingContext) => void;
   bgAudio: string; // link to background music audio
   attackAudio: string; // link to attack audio
   blockAudio: string; // link to block audio

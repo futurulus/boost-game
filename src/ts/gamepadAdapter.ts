@@ -1,7 +1,7 @@
-import { Vec2, GamepadButtonEvent, GamepadStickEvent } from "./types";
+import { Vec2, GamepadButtonEvent, GamepadStickEvent, vec2 } from "./types";
 
 export class GamepadAdapter {
-  ctx: CanvasRenderingContext2D;
+  ctx: WebGLRenderingContext;
   gamepads: ({
     buttons: {
       pressed: boolean;
@@ -9,7 +9,7 @@ export class GamepadAdapter {
     }[];
   } | null)[];
 
-  constructor(ctx: CanvasRenderingContext2D) {
+  constructor(ctx: WebGLRenderingContext) {
     this.ctx = ctx;
 
     this.gamepads = [null, null];
@@ -37,8 +37,8 @@ export class GamepadAdapter {
       const gp = gamepads[i];
       if (gp && gp.buttons && this.gamepads[i]?.buttons) {
         const axes = gp.axes;
-        this.moveStick(i, 0, { x: axes[0], y: axes[1] });
-        this.moveStick(i, 1, { x: axes[2], y: axes[3] });
+        this.moveStick(i, 0, vec2(axes[0], axes[1]));
+        this.moveStick(i, 1, vec2(axes[2], axes[3]));
 
         const buttons = gp.buttons.map((b, j) => ({
           index: j,
@@ -109,10 +109,10 @@ export class GamepadAdapter {
 
   moveStick(gamepad: number, stickIndex: number, stick: Vec2) {
     // add deadzone to prevent drift
-    const coords = {
-      x: Math.abs(stick.x) < 0.2 ? 0 : stick.x,
-      y: Math.abs(stick.y) < 0.2 ? 0 : stick.y,
-    };
+    const coords = vec2(
+      Math.abs(stick.x) < 0.2 ? 0 : stick.x,
+      Math.abs(stick.y) < 0.2 ? 0 : stick.y,
+    );
 
     const GamepadStickMove: GamepadStickEvent = new CustomEvent(
       "gamepadStickMove",

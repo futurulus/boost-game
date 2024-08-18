@@ -4,7 +4,7 @@ import { Obstacle } from "./obstacle";
 import { TickEvent } from "./types";
 
 export class Scene {
-  private ctx: CanvasRenderingContext2D;
+  private ctx: WebGLRenderingContext;
   private theme: Theme;
   private width: number;
   private height: number;

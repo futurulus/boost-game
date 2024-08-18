@@ -27,8 +27,10 @@ export class Entity {
   };
 
   protected game: Game;
-  protected ctx: CanvasRenderingContext2D;
+  protected ctx: WebGLRenderingContext;
   protected active: boolean;
+
+  protected positionBuffer: WebGLBuffer;
 
   constructor(game: Game, id: string) {
     this.game = game;
@@ -42,6 +44,8 @@ export class Entity {
     this._position = vec3(0, 0, 0);
     this._velocity = vec3(1, 0, 0);
     this.cachedPosition = {};
+
+    this.initPositionBuffer();
 
     window.requestAnimationFrame(() => {
       this.initialize();
@@ -141,15 +145,73 @@ export class Entity {
     }
   }
 
+  private initPositionBuffer() {
+    const gl = this.ctx;
+
+    const positionBuffer = gl.createBuffer();
+    if (positionBuffer === null) throw "Unable to create position buffer";
+    this.positionBuffer = positionBuffer;
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    const positions = [.01, .01, -.01, .01, .01, -.01, -.01, -.01];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+    return positionBuffer;
+  }
+
   private onNextTick(event: TickEvent): void {
+    const gl = this.ctx;
+    const renderer = this.game.renderer;
+
+    this.setPositionAttribute();
+
+    gl.useProgram(renderer.shader);
+
+    const { x, y } = this.position;
+    gl.uniformMatrix4fv(
+      renderer.uniforms.modelViewMatrix,
+      false,
+      [1, 0, 0, 0,
+       0, 1, 0, 0,
+       0, 0, 1, 0,
+       x, y, 0, 1],
+    );
+
+    const offset = 0;
+    const vertexCount = 4;
+    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+
     if (event.detail !== undefined) {
       this.tick(event.detail);
       this.draw();
     }
   }
 
+  private setPositionAttribute() {
+    const gl = this.ctx;
+    const { renderer } = this.game;
+
+    const numComponents = 2; // pull out 2 values per iteration
+    const type = gl.FLOAT; // the data in the buffer is 32bit floats
+    const normalize = false; // don't normalize
+    const stride = 0; // how many bytes to get from one set of values to the next
+    // 0 = use type and numComponents above
+    const offset = 0; // how many bytes inside the buffer to start from
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+    gl.vertexAttribPointer(
+      renderer.attribs.vertexPosition,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset,
+    );
+    gl.enableVertexAttribArray(renderer.attribs.vertexPosition);
+  }
+
   /** Execute `draw` with the context transformed into entity-relative coordinates */
   protected drawLocal(draw: () => void): void {
+    /*
     this.ctx.save();
 
     // Screen-center coordinates
@@ -185,10 +247,13 @@ export class Entity {
     // Entity rotation and scaling
     this.ctx.rotate(this.orientation);
     this.ctx.scale(this.scale.x, this.scale.y);
+    */
 
     draw();
 
+    /*
     this.ctx.restore();
+    */
   }
 
   protected draw(): void { }

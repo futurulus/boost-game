@@ -11,6 +11,7 @@ export class ReturnWall extends Entity {
 
     protected draw() {
         this.drawLocal(() => {
+            /*
             this.ctx.beginPath();
             this.ctx.fillStyle = 'cyan';
             this.ctx.moveTo( 0.5, 0.5);
@@ -19,6 +20,7 @@ export class ReturnWall extends Entity {
             this.ctx.lineTo( 0.5,-0.5);
             this.ctx.closePath();
             this.ctx.fill();
+            */
         })
     }
 }

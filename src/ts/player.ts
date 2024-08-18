@@ -348,6 +348,7 @@ export class Player extends Entity {
 
   protected draw(): void {
     this.drawLocal(() => {
+      /*
       // spaceship
       const playerColor = '#368dc8';
       this.ctx.shadowColor = playerColor;
@@ -374,6 +375,7 @@ export class Player extends Entity {
         this.ctx.lineTo(-1, 1);
         this.ctx.fill();
       }
+      */
     });
   }
 

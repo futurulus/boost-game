@@ -334,6 +334,7 @@ export class Opponent extends Entity {
 
   protected draw(): void {
     this.drawLocal(() => {
+      /*
       // body
       const opponentColor = "#d3b447";
       this.ctx.shadowColor = opponentColor;
@@ -365,6 +366,7 @@ export class Opponent extends Entity {
         this.ctx.lineTo(-1, 1);
         this.ctx.fill();
       }
+      */
     });
   }
 

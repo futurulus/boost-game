@@ -9,11 +9,11 @@ const MAX_SCREEN_BOOST = 400;
 const MAX_BOOST = 1.0;
 
 export class BoostHud {
-  private ctx: CanvasRenderingContext2D
+  private ctx: WebGLRenderingContext
   private player: Player;
   private entities: Entity[];
 
-  constructor(ctx: CanvasRenderingContext2D, player: Player, entities: Entity[]) {
+  constructor(ctx: WebGLRenderingContext, player: Player, entities: Entity[]) {
     this.player = player;
     this.ctx = ctx;
     this.entities = entities;
@@ -65,6 +65,7 @@ export class BoostHud {
 
   draw() {
     if (this.player.action.plannedBoost !== null) {
+      /*
       this.ctx.save();
 
       const { width, height } = this.ctx.canvas;
@@ -93,10 +94,12 @@ export class BoostHud {
       });
 
       this.ctx.restore();
+      */
     }
   }
 
   drawArrow(start: Vec2, end: Vec2) {
+    /*
     const radius = ARROW_RADIUS * PX;
     const diff = end.minus(start);
     const lengthSq = diff.magSq();
@@ -120,5 +123,6 @@ export class BoostHud {
     this.ctx.lineTo(end.x, end.y);
     this.ctx.closePath();
     this.ctx.fill();
+    */
   }
 }
