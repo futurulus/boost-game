@@ -1,7 +1,9 @@
+import { Renderer } from "./render";
 import { hexToRGB } from "./util";
 
 export class Countdown {
   ctx: WebGLRenderingContext;
+  canvas: HTMLCanvasElement;
   interval: number;
   intervalLength: number;
   intervalCount: number;
@@ -9,8 +11,9 @@ export class Countdown {
   flashColor: string;
   flashOpacity: number;
 
-  constructor(ctx: WebGLRenderingContext) {
-    this.ctx = ctx;
+  constructor(renderer: Renderer) {
+    this.ctx = renderer.ctx;
+    this.canvas = renderer.canvas;
     this.interval = 0;
     this.intervalLength = 650;
     this.intervalCount = 3;
@@ -18,7 +21,7 @@ export class Countdown {
     this.flashColor = "#ff4d4d";
     this.flashOpacity = 1;
 
-    this.ctx.canvas.addEventListener("tick", () => {
+    this.canvas.addEventListener("tick", () => {
       this.draw();
     });
   }
@@ -46,7 +49,7 @@ export class Countdown {
   stopTimer() {
     window.clearInterval(this.interval);
     this.interval = 0;
-    this.ctx.canvas.dispatchEvent(new Event("play"));
+    this.canvas.dispatchEvent(new Event("play"));
   }
 
   draw() {
@@ -58,21 +61,21 @@ export class Countdown {
     this.ctx.save();
     const flashRgb = hexToRGB(this.flashColor);
     this.ctx.fillStyle = `rgba(${flashRgb.r},${flashRgb.g},${flashRgb.b},${this.flashOpacity})`;
-    this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.ctx.fillStyle = "#ff4d4d";
     this.ctx.shadowColor = "rgba(0,0,0,0.3)";
     this.ctx.shadowOffsetX = 2;
     this.ctx.shadowOffsetY = 2;
     this.ctx.shadowBlur = 5;
-    this.ctx.font = `${this.ctx.canvas.height / 1.5}px PressStart2P`;
+    this.ctx.font = `${this.canvas.height / 1.5}px PressStart2P`;
 
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "middle";
     this.ctx.fillText(
       this.count.toString(),
-      this.ctx.canvas.width / 2,
-      this.ctx.canvas.height / 2 + 100
+      this.canvas.width / 2,
+      this.canvas.height / 2 + 100
     );
     this.ctx.restore();
     */

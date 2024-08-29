@@ -1,5 +1,5 @@
 import { Entity } from "../entity";
-import { Game, PX } from "../main";
+import { Game } from "../main";
 import { vec2 } from "../types";
 
 const THICKNESS = 5;

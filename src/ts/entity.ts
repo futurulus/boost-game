@@ -1,7 +1,7 @@
 import { lightConeIntersection, nowIntersection } from "./geometry";
-import { C, Game } from "./main";
+import { Game } from "./main";
 import { Obstacle } from "./obstacle";
-import { Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
+import { C, Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
 
 const AXIS_SHRINK = 1e5;
 
@@ -28,13 +28,15 @@ export class Entity {
 
   protected game: Game;
   protected ctx: WebGLRenderingContext;
+  protected canvas: HTMLCanvasElement;
   protected active: boolean;
 
   protected positionBuffer: WebGLBuffer;
 
   constructor(game: Game, id: string) {
     this.game = game;
-    this.ctx = game.ctx;
+    this.ctx = game.renderer.ctx;
+    this.canvas = game.renderer.canvas;
     this.active = false;
 
     this.id = id;
@@ -51,7 +53,7 @@ export class Entity {
       this.initialize();
     });
 
-    this.ctx.canvas.addEventListener("tick", (event: TickEvent) => {
+    this.canvas.addEventListener("tick", (event: TickEvent) => {
       this.onNextTick(event);
     });
 
@@ -153,7 +155,7 @@ export class Entity {
     this.positionBuffer = positionBuffer;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    const positions = [.01, .01, -.01, .01, .01, -.01, -.01, -.01];
+    const positions = [10, 10, -10, 10, 10, -10, -10, -10];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     return positionBuffer;
@@ -167,14 +169,15 @@ export class Entity {
 
     gl.useProgram(renderer.shader);
 
-    const { x, y } = this.position;
+    const { x, y } = this.viewPosition;
+    const { clientWidth: w, clientHeight: h } = this.canvas;
     gl.uniformMatrix4fv(
       renderer.uniforms.modelViewMatrix,
       false,
-      [1, 0, 0, 0,
-       0, 1, 0, 0,
+      [1 / w, 0, 0, 0,
+       0, 1 / h, 0, 0,
        0, 0, 1, 0,
-       x, y, 0, 1],
+       x / w, y / h, 0, 1],
     );
 
     const offset = 0;
@@ -215,7 +218,7 @@ export class Entity {
     this.ctx.save();
 
     // Screen-center coordinates
-    const { width, height } = this.ctx.canvas;
+    const { width, height } = this.canvas;
     this.ctx.translate(width / 2, height / 2);
     // -y for right-hand coordinate system
     this.ctx.scale(C, -C);

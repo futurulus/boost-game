@@ -5,16 +5,18 @@ import { TickEvent } from "./types";
 
 export class Scene {
   private ctx: WebGLRenderingContext;
+  private canvas: HTMLCanvasElement;
   private theme: Theme;
   private width: number;
   private height: number;
   private obstacles: Obstacle[];
 
   constructor(game: Game, theme: Theme) {
-    this.ctx = game.ctx;
+    this.ctx = game.renderer.ctx;
+    this.canvas = game.renderer.canvas;
     this.theme = theme;
-    this.width = this.ctx.canvas.width;
-    this.height = this.ctx.canvas.height;
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
     this.obstacles = this.theme.config.obstacles.map(
       (obstacle, i) =>
         new Obstacle(
@@ -25,7 +27,7 @@ export class Scene {
         )
     );
 
-    this.ctx.canvas.addEventListener("tick", (event: TickEvent) => {
+    this.canvas.addEventListener("tick", (event: TickEvent) => {
       if (event.detail !== undefined) {
         this.draw(event.detail.frameCount);
       }

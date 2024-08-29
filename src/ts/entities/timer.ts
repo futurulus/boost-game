@@ -1,5 +1,5 @@
 import { Entity } from "../entity";
-import { Game, PX } from "../main";
+import { Game } from "../main";
 import { vec2 } from "../types";
 
 const INNER_RADIUS = 0.6;
@@ -11,7 +11,7 @@ const OUTER_HUE_PERIOD = 180;
 export class Timer extends Entity {
     constructor(game: Game, id: string) {
         super(game, id);
-        this.scale = vec2(20 * PX, 20 * PX);
+        this.scale = vec2(20, 20);
         this.pt = 0;
     }
 

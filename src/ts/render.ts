@@ -4,19 +4,21 @@ const DT_MAX = 0.1;
 
 export class Renderer {
   ctx: WebGLRenderingContext;
+  canvas: HTMLCanvasElement;
   shader: WebGLProgram;
   attribs: { [key: string]: number };
   uniforms: { [key: string]: WebGLUniformLocation };
 
+  running: boolean = false;
   oldTimeStamp: number = 0;
 
-  constructor(ctx: WebGLRenderingContext) {
+  constructor(ctx: WebGLRenderingContext, canvas: HTMLCanvasElement) {
     this.ctx = ctx;
+    this.canvas = canvas;
+    this.running = false;
     this.attribs = {};
     this.uniforms = {};
     this.compileShaders();
-
-    this.initTicker();
   }
 
   private compileShaders() {
@@ -81,10 +83,21 @@ export class Renderer {
     return shader;
   }
 
-  private initTicker() {
+  start() {
+    if (this.running) return;
+    this.running = true;
+    this.nextFrame();
+  }
+
+  stop() {
+    this.running = false;
+  }
+
+  private nextFrame() {
+    if (!this.running) return;
     window.requestAnimationFrame(() => {
       this.tick();
-      this.initTicker();
+      this.nextFrame();
     });
   }
 
@@ -104,6 +117,6 @@ export class Renderer {
     gl.clearColor(0, 0, 0, 1);
     gl.clearDepth(1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    this.ctx.canvas.dispatchEvent(tick);
+    this.canvas.dispatchEvent(tick);
   }
 }

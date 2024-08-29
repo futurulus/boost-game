@@ -3,7 +3,7 @@ import { Polygon, Vector } from "collider2d";
 import config from "../../config.json" assert { type: "json" };
 import { Entity } from "./entity";
 import { Opponent } from "./entities/opponent";
-import { Game, PX } from "./main";
+import { Game } from "./main";
 import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, Vec2, vec2, vec3 } from "./types";
 import { clamp, rotate } from "./util";
 import { Timer } from "./entities/timer";
@@ -32,13 +32,13 @@ export class Player extends Entity {
   constructor(game: Game) {
     super(game, 'player');
     this.position = vec3(0, 0, 0);
-    this.scale = vec2(100 * PX, 100 * PX);
-    this.acceleration = 2.0;
+    this.scale = vec2(100, 100);
+    this.acceleration = 2000.0;
     this.range = 1.5;
     this.attackDuration = 200;
     this.blockDuration = 300;
     this.cooldownDuration = 800;
-    this.maxVelocity = 1.0;
+    this.maxVelocity = 1000.0;
     this.action = {
       movingX: 0,
       movingY: 0,
@@ -181,7 +181,7 @@ export class Player extends Entity {
 
   private captureEvent(event: KeyboardEvent): void {
     if (
-      event.target === this.ctx.canvas &&
+      event.target === this.canvas &&
       config.controls.find((x) => Object.values(x).some((y) => y.includes(event.code)))
     ) {
       event.preventDefault();
@@ -316,7 +316,7 @@ export class Player extends Entity {
         winner: playerNum,
       },
     });
-    this.ctx.canvas.dispatchEvent(finish);
+    this.canvas.dispatchEvent(finish);
   }
 
   private block(): void {

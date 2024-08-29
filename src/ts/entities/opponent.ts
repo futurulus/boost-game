@@ -2,7 +2,7 @@ import { Polygon, Vector } from "collider2d";
 
 import config from "../../../config.json" assert { type: "json" };
 import { Entity } from "../entity";
-import { Game, PX } from "../main";
+import { Game } from "../main";
 import { FinishEvent, GamepadButtonEvent, GamepadStickEvent, Rectangle, Tick, vec2, vec3 } from "../types";
 import { clamp, rotate } from "../util";
 import { Timer } from "./timer";
@@ -26,14 +26,14 @@ export class Opponent extends Entity {
 
   constructor(game: Game, id: string) {
     super(game, id);
-    this.acceleration = 2.0;
+    this.acceleration = 2000.0;
     this.range = 3.0;  // times scale
     this.attackDuration = 200;
     this.blockDuration = 300;
     this.cooldownDuration = 800;
-    this.maxVelocity = 1.0;
-    this.position = vec3(0, 250 * PX, 250 * PX);
-    this.scale = vec2(50 * PX, 50 * PX);
+    this.maxVelocity = 1000.0;
+    this.position = vec3(0, 250, 250);
+    this.scale = vec2(50, 50);
     this.action = {
       movingX: 0,
       movingY: 0,
@@ -173,7 +173,7 @@ export class Opponent extends Entity {
 
   private captureEvent(event: KeyboardEvent): void {
     if (
-      event.target === this.ctx.canvas &&
+      event.target === this.canvas &&
       config.controls.find((x) => Object.values(x).some((y) => y.includes(event.code)))
     ) {
       event.preventDefault();
@@ -302,7 +302,7 @@ export class Opponent extends Entity {
         winner: playerNum,
       },
     });
-    this.ctx.canvas.dispatchEvent(finish);
+    this.canvas.dispatchEvent(finish);
   }
 
   private block(): void {

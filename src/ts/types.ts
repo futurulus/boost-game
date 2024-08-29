@@ -1,3 +1,14 @@
+/**
+ * Speed of light in canvas pixels per second.
+ *
+ * Note that canvas coordinate pixels are not necessarily equal to screen
+ * pixels; the canvas is resized in CSS (but pretends to be 1920x1080 for
+ * drawing operations).
+ */
+export const C = 1000;
+export const C_INV = 1 / C;
+export const C_INV_SQ = C_INV * C_INV;
+
 export class Vec2 {
   x: number;
   y: number;
@@ -17,8 +28,7 @@ export class Vec2 {
    * object with velocity equal to this vector in frame of reference B,
    * seen from a frame of reference A in which the frame of reference B
    * is moving with velocity `reference`. Vec2 objects are interpreted as
-   * coordinate velocity, Vec3 as three-velocity (in all cases in units where c
-   * = 1).
+   * coordinate velocity, Vec3 as three-velocity.
    *
    * Caution: relativistic velocity addition is **neither commutative nor
    * associative**. See the docs for `Vec3.boost` for more.
@@ -26,9 +36,9 @@ export class Vec2 {
   boost(reference: Vec2 | Vec3): Vec2 {
     if (reference instanceof Vec3) reference = reference.vel2();
 
-    // https://scipp.ucsc.edu/~haber/ph171/uvector15.pdf
+    // https://scipp.ucsc.edu/~haber/ph171/uvector15.pdf eq. (13)
     const dot = this.dot(reference);
-    const speedFactor = 1 / (1 + dot);
+    const speedFactor = 1 / (1 + dot * C_INV_SQ);
     const gamma = reference.gamma();
     const thisScale = 1 / gamma;
     const referenceScale = (
@@ -46,11 +56,11 @@ export class Vec2 {
   magSq(): number { return this.x * this.x + this.y * this.y; }
   mag(): number { return Math.sqrt(this.magSq()); }
   /** @returns The Lorentz factor for this velocity https://en.wikipedia.org/wiki/Lorentz_factor */
-  gamma(): number { return 1 / Math.sqrt(1 - this.magSq()); }
+  gamma(): number { return 1 / Math.sqrt(1 - this.magSq() * C_INV_SQ); }
 
   /**
    * @returns the three-vector (https://en.wikipedia.org/wiki/Four-vector)
-   * equivalent of this vector interpreted as velocity in units where c = 1
+   * equivalent of this vector interpreted as velocity in canvas pixels/second.
    */
   vel3(): Vec3 {
     const gamma = this.gamma();
@@ -61,11 +71,18 @@ export class Vec2 {
    * @returns the three-velocity with the same x and y components as this vector
    * (inferring the correct t component)
    */
-  spaceToVel3(): Vec3 { return new Vec3(Math.sqrt(this.magSq() + 1), this.x, this.y); }
+  spaceToVel3(): Vec3 { return new Vec3(Math.sqrt(this.magSq() * C_INV_SQ + 1), this.x, this.y); }
 };
 
 /**
- * Represents a three-vector (https://en.wikipedia.org/wiki/Four-vector) in 2+1 Minkowski spacetime
+ * Represents a three-vector (https://en.wikipedia.org/wiki/Four-vector) in 2+1
+ * Minkowski spacetime.
+ *
+ * Three-vectors are interpreted as "mixed" units, in which the time component
+ * is in seconds and the space component is in canvas pixels (or for velocities,
+ * seconds/second=unitless and canvas pixels/second, respectively). Hence, the
+ * three-vector for a velocity is implemented as (γ, γv₁, γv₂), instead of the
+ * more usual physics convention of (γc, γv₁, γv₂).
  */
 export class Vec3 {
   x: number;
@@ -85,12 +102,12 @@ export class Vec3 {
     return new Vec3(this.t - other.t, this.x - other.x, this.y - other.y);
   }
   /**
-   * @returns The three-vector inner product of two vectors. Uses metric
+   * @returns The three-vector inner product of two vectors, in s². Uses metric
    * signature (+--), so (perhaps counterintuitively) similar spacelike vectors
    * have a *negative* dot product.
    */
   dot(other: Vec3): number {
-    return this.t * other.t - this.x * other.x - this.y * other.y;
+    return this.t * other.t - C_INV_SQ * (this.x * other.x + this.y * other.y);
   }
   times(scale: number): Vec3 { return new Vec3(this.t * scale, this.x * scale, this.y * scale); }
 
@@ -130,14 +147,15 @@ export class Vec3 {
     //   X = this = (t, x)
     //   U = reference = (g, -gu)  negative because this is an inverse/active transform
     //   X' = this.boost(reference) = (t', x')
-    //   [natural units: c = 1]
     const [thisSpace, referenceSpace] = [this.space(), reference.space()];
-    //   x' = x + g²/(g+1) (u·x) u - gt u
-    //      = x + [(-gu·x)/(g+1) + t] (-gu)
-    const spatialDot = referenceSpace.dot(thisSpace);
+    //   x' = x + g²/c²(g+1) (u·x) u - gt u
+    //      = x + g/c²(g+1) (u·x) gu - t gu
+    //      = x + [-gu·x/c²(g+1) + t] (-gu)
+    //   spatialDot = -gu·x/c²
+    const spatialDot = referenceSpace.dot(thisSpace) * C_INV_SQ;
     const referenceScale = spatialDot / (reference.t + 1) + this.t;
     const { x, y } = thisSpace.plus(referenceSpace.times(referenceScale));
-    //   t' = g(t - u·x) = gt + -gu·x
+    //   t' = g(t - u·x/c²) = gt + -gu·x/c²
     return new Vec3(this.t * reference.t + spatialDot, x, y);
   }
 
@@ -147,13 +165,13 @@ export class Vec3 {
    */
   inv(): Vec3 { return new Vec3(this.t, -this.x, -this.y); }
   /**
-   * @returns The spacetime interval associated with this three-vector. Positive
-   * if timelike, negative if spacelike.
+   * @returns The spacetime interval associated with this three-vector, in s².
+   * Positive if timelike, negative if spacelike.
    */
-  interval(): number { return this.t * this.t - this.x * this.x - this.y * this.y; }
+  interval(): number { return this.t * this.t - C_INV_SQ * (this.x * this.x + this.y * this.y); }
   /**
    * @returns The two-vector coordinate velocity associated with this three-vector
-   * interpreted as a three-velocity, in units where c = 1.
+   * interpreted as a three-velocity, in canvas pixels/second.
    */
   vel2(): Vec2 { return new Vec2(this.x / this.t, this.y / this.t); }
   /** @returns The spatial part of this vector (x, y), as a Vec2 */

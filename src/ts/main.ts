@@ -13,27 +13,7 @@ import { Opponent } from "./entities/opponent";
 import { Timer } from "./entities/timer";
 import { ReturnWall } from "./entities/returnWall";
 
-/**
- * Speed of light in canvas pixels per second.
- *
- * Most code will **not** need this constant; positions and velocities are
- * expressed in "natural units", setting c = 1. In other words, a position of
- * one light-second or 1000 pixels to the right on the X axis is represented by
- * `Vec2(1, 0)`. This constant is primarily used in core rendering code.
- */
-export const C = 1000;
-/**
- * One pixel, in light-seconds. Useful for when you want to specify something
- * in pixels: 300*PX is 300px.
- *
- * Note that this will generally give you canvas coordinate pixels, which are
- * not necessarily equal to screen pixels; the canvas is resized in CSS (but
- * pretends to be 1920x1080 for drawing operations).
- */
-export const PX = 1 / C;
-
 export class Game {
-  ctx: WebGLRenderingContext;
   collider: Collider2d;
   obstacles: Obstacle[];
   player: Player;
@@ -48,7 +28,8 @@ export class Game {
     const ctx = canvas.getContext("webgl");
     if (ctx === null) throw new Error("Can't get context from canvas!");
 
-    this.ctx = ctx;
+    this.renderer = new Renderer(ctx, canvas);
+
     canvas.classList.add("fade-in");
     this.collider = new Collider2d();
     this.obstacles = [];
@@ -59,30 +40,32 @@ export class Game {
 
     for (let x = -250; x <= 250; x += 100) {
       const topWall = new ReturnWall(this, 'topWall');
-      topWall.position = vec3(0, x * PX, 800 * PX);
-      topWall.scale = vec2(100 * PX, 5 * PX);
+      topWall.position = vec3(0, x, 800);
+      topWall.scale = vec2(100, 5);
     }
 
     for (let x = -600; x <= 600; x += 400) {
       for (let y = -600; y <= 600; y += 400) {
         const timer = new Timer(this, `t_${x}_${y}`);
-        timer.position = vec3(0, x * PX, y * PX);
+        timer.position = vec3(0, x, y);
       }
     }
 
-    this.gamepadAdapter = new GamepadAdapter(this.ctx);
+    this.gamepadAdapter = new GamepadAdapter(canvas);
 
-    this.countdown = new Countdown(this.ctx);
+    this.countdown = new Countdown(this.renderer);
     this.gui = new Gui(this, 2);
 
-    this.renderer = new Renderer(this.ctx);
+    this.renderer.start();
 
     this.manageState();
     this.start();
   }
 
   manageState() {
-    this.ctx.canvas.addEventListener("countdown", ((e: FinishEvent) => {
+    const { canvas } = this.renderer;
+
+    canvas.addEventListener("countdown", ((e: FinishEvent) => {
       if (typeof e.detail?.winner === "number") {
         this.gui.incrementScore(e.detail.winner);
       }
@@ -91,7 +74,7 @@ export class Game {
       this.togglePlayers(false);
     }) as EventListener);
 
-    this.ctx.canvas.addEventListener("play", () => {
+    canvas.addEventListener("play", () => {
       this.togglePlayers(true);
     });
   }
@@ -109,7 +92,7 @@ export class Game {
 
   start() {
     const startEvent: FinishEvent = new Event("countdown");
-    this.ctx.canvas.dispatchEvent(startEvent);
+    this.renderer.canvas.dispatchEvent(startEvent);
   }
 }
 

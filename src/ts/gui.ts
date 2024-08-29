@@ -1,6 +1,7 @@
 import config from "../../config.json" assert { type: "json" };
-import { Game, PX } from "./main";
+import { Game } from "./main";
 import { Player } from "./player";
+import { Renderer } from "./render";
 import { Vec2, vec2 } from "./types";
 import { CircleButton } from "./ui/button";
 import { BoostHud } from "./ui/hud";
@@ -12,10 +13,9 @@ const BUTTON = {
 }
 
 export const getMousePos = (
-  x: number, y: number, ctx: WebGLRenderingContext, mode: "canvas" | "world" = "canvas"
+  x: number, y: number, canvas: HTMLCanvasElement, mode: "canvas" | "world" = "canvas"
 ): Vec2 => {
   // https://stackoverflow.com/a/17130415
-  const { canvas } = ctx;
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
   const scaleY = canvas.height / rect.height;
@@ -23,12 +23,13 @@ export const getMousePos = (
   if (mode === "canvas") return canvasPos;
 
   const { width, height } = canvas;
-  const invPos = canvasPos.minus(vec2(width * 0.5, height * 0.5)).times(PX);
+  const invPos = canvasPos.minus(vec2(width * 0.5, height * 0.5));
   return vec2(invPos.x, -invPos.y);
 }
 
 export class Gui {
   private ctx: WebGLRenderingContext;
+  private canvas: HTMLCanvasElement;
   private player: Player;
   private score: number[];
   private visualButton: CircleButton;
@@ -37,15 +38,17 @@ export class Gui {
   private boostHud: BoostHud;
 
   constructor(game: Game, players: number) {
-    const { ctx, player, entities } = game;
-    this.ctx = game.ctx;
+    const { player, entities } = game;
+    const { ctx, canvas } = game.renderer;
+    this.ctx = ctx;
+    this.canvas = canvas;
     this.player = game.player;
     this.score = [];
     this.score.length = players;
     this.score.fill(0);
 
     this.visualButton = new CircleButton({
-      ctx,
+      renderer: game.renderer,
       position: vec2(75, 75),
       scale: vec2(BUTTON.scale, BUTTON.scale),
       color: 'white',
@@ -54,7 +57,7 @@ export class Gui {
       onclick: () => { this.player.cameraMode = "visual"; },
     });
     this.nowButton = new CircleButton({
-      ctx,
+      renderer: game.renderer,
       position: vec2(175, 75),
       scale: vec2(BUTTON.scale, BUTTON.scale),
       color: 'red',
@@ -63,7 +66,7 @@ export class Gui {
       onclick: () => { this.player.cameraMode = "now"; },
     });
     this.futureButton = new CircleButton({
-      ctx,
+      renderer: game.renderer,
       position: vec2(275, 75),
       scale: vec2(BUTTON.scale, BUTTON.scale),
       color: 'blue',
@@ -71,9 +74,9 @@ export class Gui {
       isSelected: () => this.player.cameraMode === "future",
       onclick: () => { this.player.cameraMode = "future"; },
     });
-    this.boostHud = new BoostHud(ctx, player, entities);
+    this.boostHud = new BoostHud(game.renderer, player, entities);
 
-    this.ctx.canvas.addEventListener("tick", () => {
+    canvas.addEventListener("tick", () => {
       this.draw();
     });
   }
@@ -93,7 +96,7 @@ export class Gui {
       this.ctx.fillStyle = config.colors[player];
       this.ctx.font = `80px PressStart2P`;
       this.ctx.textAlign = player === 0 ? "right" : "left";
-      this.ctx.fillText(score.toString(), this.ctx.canvas.width / 2 + (100 * (player === 0 ? -1 : 1)) / 2, 110);
+      this.ctx.fillText(score.toString(), this.canvas.width / 2 + (100 * (player === 0 ? -1 : 1)) / 2, 110);
     });
     this.ctx.restore();
     */

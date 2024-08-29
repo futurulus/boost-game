@@ -1,8 +1,9 @@
 import { getMousePos } from "../gui";
+import { Renderer } from "../render";
 import { Vec2 } from "../types";
 
 type Props = {
-  ctx: WebGLRenderingContext;
+  renderer: Renderer;
   position: Vec2;
   scale: Vec2;
   color: string;
@@ -19,25 +20,29 @@ export class CircleButton {
   constructor(props: Props) {
     this.props = props;
 
-    const { ctx, position, scale } = props;
+    const { position, scale } = props;
+    const { canvas } = props.renderer;
 
     this.hitPath = new Path2D();
     this.hitPath.moveTo(position.x + scale.x, position.y);
     this.hitPath.ellipse(position.x, position.y, scale.x, scale.y, 0, 0, 2 * Math.PI);
 
-    ctx.canvas.addEventListener("click", e => this.onClick(e));
-    ctx.canvas.addEventListener("tick", () => this.draw());
+    canvas.addEventListener("click", e => this.onClick(e));
+    canvas.addEventListener("tick", () => this.draw());
   }
 
   onClick(e: MouseEvent) {
-    const { ctx, onclick } = this.props;
+    /*
+    const { onclick } = this.props;
     const { x, y } = getMousePos(e.clientX, e.clientY, ctx);
     if (!ctx.isPointInPath(this.hitPath, x, y)) return;
     onclick();
+    */
   }
 
   draw() {
-    const { ctx, position, scale, color, draw, isSelected } = this.props;
+    const { position, scale, color, draw, isSelected } = this.props;
+    const { ctx } = this.props.renderer;
     /*
 
     const selected = isSelected();

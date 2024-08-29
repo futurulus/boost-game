@@ -1,7 +1,7 @@
 import { Vec2, GamepadButtonEvent, GamepadStickEvent, vec2 } from "./types";
 
 export class GamepadAdapter {
-  ctx: WebGLRenderingContext;
+  canvas: HTMLCanvasElement;
   gamepads: ({
     buttons: {
       pressed: boolean;
@@ -9,13 +9,13 @@ export class GamepadAdapter {
     }[];
   } | null)[];
 
-  constructor(ctx: WebGLRenderingContext) {
-    this.ctx = ctx;
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
 
     this.gamepads = [null, null];
     this.saveGamepadsState();
 
-    ctx.canvas.addEventListener("tick", () => {
+    canvas.addEventListener("tick", () => {
       this.pollGamepads();
     });
   }
