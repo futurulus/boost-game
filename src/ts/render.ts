@@ -5,9 +5,7 @@ const DT_MAX = 0.1;
 interface RelativityUniforms {
   cInvSq: WebGLUniformLocation;
   sign: WebGLUniformLocation;
-  entityPosition: WebGLUniformLocation;
-  viewPosition: WebGLUniformLocation;
-  entityVelocity: WebGLUniformLocation;
+  entityVelocity2: WebGLUniformLocation;
   vertexTransform: WebGLUniformLocation;
   viewScreenTransform: WebGLUniformLocation;
 };
@@ -41,30 +39,24 @@ export class Renderer {
     const gl = this.ctx;
     const vertexShaderSource = `
       uniform float cInvSq, sign;
-      uniform vec3 entityPosition, viewPosition;
-      uniform vec2 entityVelocity;
-      uniform mat3 vertexTransform;
-      uniform mat4 viewScreenTransform;
-      attribute vec3 vertexOffset;
+      uniform vec2 entityVelocity2;
+      uniform mat4 vertexTransform, viewScreenTransform;
+      attribute vec4 vertexOffset;
 
       varying lowp vec3 vertexColor;
 
       void main() {
-        vec3 offset = vertexTransform * vertexOffset;
-        vec3 absPosition = entityPosition + offset;
-        vec3 relPosition = absPosition - viewPosition;
-        vec2 p0 = relPosition.xy - entityVelocity.xy * relPosition.z;
-        float p0DotVel = dot(p0, entityVelocity) * cInvSq;
-        float invGammaSq = 1. - dot(entityVelocity, entityVelocity) * cInvSq;
+        vec3 relPosition = (vertexTransform * vertexOffset).xyz;
+        vec2 p0 = relPosition.xy - entityVelocity2.xy * relPosition.z;
+        float p0DotVel = dot(p0, entityVelocity2) * cInvSq;
+        float invGammaSq = 1. - dot(entityVelocity2, entityVelocity2) * cInvSq;
 
-        float t = (
+        float dt = (
             p0DotVel + sign * sqrt(p0DotVel * p0DotVel + invGammaSq * dot(p0, p0) * cInvSq)
-        ) / invGammaSq + viewPosition.z - absPosition.z;
-        vec3 trueOffset = offset + t * vec3(entityVelocity, 1.);
-        vec3 truePosition = entityPosition + trueOffset;
-        gl_Position = viewScreenTransform * vec4(truePosition, 1.),
+        ) / invGammaSq - relPosition.z;
+        vec3 trueRelPosition = relPosition + dt * vec3(entityVelocity2, 1.);
+        gl_Position = viewScreenTransform * vec4(trueRelPosition, 1.),
         vertexColor = 0.5 * gl_Position.xyz + 0.5;
-        // vertexColor = 10. * trueOffset.z * vec3(-1., 0., 1.);
       }
     `;
     const fragmentShaderSource = `
@@ -90,9 +82,7 @@ export class Renderer {
     const uniforms = {
       cInvSq: -1,
       sign: -1,
-      entityPosition: -1,
-      viewPosition: -1,
-      entityVelocity: -1,
+      entityVelocity2: -1,
       vertexTransform: -1,
       viewScreenTransform: -1,
     };

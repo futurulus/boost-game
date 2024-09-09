@@ -169,7 +169,7 @@ export class Entity {
       position: { x: cx, y: cy, t: ct },
     } = this.game.player;
     const { x, y, t } = this.visualPosition;
-    const { x: vx, y: vy } = this.velocity.vel2();
+    const { x: vx2, y: vy2 } = this.velocity.vel2();
     const { x: sx, y: sy } = this.scale;
     const { width: w, height: h } = this.canvas;
 
@@ -177,25 +177,23 @@ export class Entity {
 
     gl.uniform1f(renderer.uniforms.cInvSq, C_INV_SQ);
     gl.uniform1f(renderer.uniforms.sign, cameraMode === "future" ? 1 : -1);  // TODO: now camera mode
-    gl.uniform3fv(renderer.uniforms.entityPosition, [x, y, t]);
-    gl.uniform3fv(renderer.uniforms.viewPosition, [cx, cy, ct]);
-    gl.uniform2fv(renderer.uniforms.entityVelocity, [vx, vy]);
+    gl.uniform2fv(renderer.uniforms.entityVelocity2, [vx2, vy2]);
 
-    // Convert unscaled entity-relevant coordinates to world coordinates:
-    //   vertexTransform = boost * rotate * scale
-    const vertexTransform = mat3.create();
-    mat3.fromRotation(vertexTransform, this.orientation);
-    mat3.scale(vertexTransform, vertexTransform, [sx, sy]);
+    // Convert unscaled entity-relative coordinates to camera-relative coordinates:
+    //   vertexTransform = translate * boost * rotate * scale
+    const vertexTransform = mat4.create();
+    mat4.fromTranslation(vertexTransform, [x - cx, y - cy, t - ct]);
     // We need to boost vertex offsets for objects that are moving relative to
     // world coordinates because their length scale is assumed to be correct in
     // the reference frame in which the object is stationary.
-    const boostMatrix = mat3.create();
-    mat3.multiply(
+    mat4.multiply(
       vertexTransform,
-      mat3.fromMat4(boostMatrix, this.createBoostMatrix(this.velocity)),
       vertexTransform,
+      this.createBoostMatrix(this.velocity),
     );
-    gl.uniformMatrix3fv(renderer.uniforms.vertexTransform, false, vertexTransform);
+    mat4.rotate(vertexTransform, vertexTransform, this.orientation, [0, 0, 1]);
+    mat4.scale(vertexTransform, vertexTransform, [sx, sy, 1]);
+    gl.uniformMatrix4fv(renderer.uniforms.vertexTransform, false, vertexTransform);
 
     // Implement the camera (read these transformations in reverse order for
     // more intuitive interpretation):
@@ -208,14 +206,11 @@ export class Entity {
     mat4.scale(viewScreenTransform, viewScreenTransform, [1, 1, 0]);
     // Adjust for the relativistic effects of the player's velocity by boosting
     // to a frame in which the player is stationary
-    const viewBoostMatrix = this.createBoostMatrix(this.game.player.velocity.inv());
     mat4.multiply(
       viewScreenTransform,
       viewScreenTransform,
-      viewBoostMatrix,
+      this.createBoostMatrix(this.game.player.velocity.inv()),
     );
-    // Center the screen on the player
-    mat4.translate(viewScreenTransform, viewScreenTransform, [-cx, -cy, -ct]);
     gl.uniformMatrix4fv(renderer.uniforms.viewScreenTransform, false, viewScreenTransform);
 
     renderer.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
