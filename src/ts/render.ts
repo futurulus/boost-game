@@ -12,6 +12,7 @@ interface RelativityUniforms {
 
 interface RelativityAttribs {
   vertexOffset: number;
+  vertexColor: number;
 };
 
 export class Renderer {
@@ -41,9 +42,9 @@ export class Renderer {
       uniform float cInvSq, sign;
       uniform vec2 entityVelocity2;
       uniform mat4 vertexTransform, viewScreenTransform;
-      attribute vec4 vertexOffset;
+      attribute vec4 vertexOffset, vertexColor;
 
-      varying lowp vec3 vertexColor;
+      varying lowp vec4 outColor;
 
       void main() {
         vec3 relPosition = (vertexTransform * vertexOffset).xyz;
@@ -56,13 +57,13 @@ export class Renderer {
         ) / invGammaSq - relPosition.z;
         vec3 trueRelPosition = relPosition + dt * vec3(entityVelocity2, 1.);
         gl_Position = viewScreenTransform * vec4(trueRelPosition, 1.),
-        vertexColor = 0.5 * gl_Position.xyz + 0.5;
+        outColor = vertexColor;
       }
     `;
     const fragmentShaderSource = `
-      varying lowp vec3 vertexColor;
+      varying lowp vec4 outColor;
       void main() {
-        gl_FragColor = vec4(vertexColor.rgb, 1.);
+        gl_FragColor = outColor;
       }
     `;
     const vertexShader = this.loadShader(gl.VERTEX_SHADER, vertexShaderSource);
@@ -95,6 +96,7 @@ export class Renderer {
 
     this.attribs = {
       vertexOffset: gl.getAttribLocation(shaderProgram, "vertexOffset"),
+      vertexColor: gl.getAttribLocation(shaderProgram, "vertexColor"),
     };
 
     this.shader = shaderProgram;

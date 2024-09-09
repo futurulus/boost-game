@@ -1,4 +1,4 @@
-import { mat3, mat4 } from "gl-matrix";
+import { mat4 } from "gl-matrix";
 import { lightConeIntersection, nowIntersection } from "./geometry";
 import { Game } from "./main";
 import { Obstacle } from "./obstacle";
@@ -33,6 +33,7 @@ export class Entity {
   protected active: boolean;
 
   protected positionBuffer: WebGLBuffer;
+  protected colorBuffer: WebGLBuffer;
 
   constructor(game: Game, id: string) {
     this.game = game;
@@ -48,7 +49,7 @@ export class Entity {
     this._velocity = vec3(1, 0, 0);
     this.cachedPosition = {};
 
-    this.initPositionBuffer();
+    this.initBuffers();
 
     window.requestAnimationFrame(() => {
       this.initialize();
@@ -148,16 +149,36 @@ export class Entity {
     }
   }
 
-  private initPositionBuffer() {
+  private initBuffers() {
     const gl = this.ctx;
 
     const positionBuffer = gl.createBuffer();
     if (positionBuffer === null) throw "Unable to create position buffer";
+    const colorBuffer = gl.createBuffer();
+    if (colorBuffer === null) throw "Unable to create color buffer";
     this.positionBuffer = positionBuffer;
+    this.colorBuffer = colorBuffer;
 
+    const positions = [
+      1, 0,    0, .5,   0, -.5,
+      0, .5,   -1, 1,   -1, 0,
+      0, -.5,  -1, 0,   -1, -1,
+      -.5, 0,  0, .5,   -1, 0,
+      -.5, 0,  -1, 0,   0, -.5,
+      -.5, 0,  0, -.5,  0, .5,
+    ];
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    const positions = [1, 0, -1, 1, -1, -1];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    const colors = [
+      0, 0, 1,  1, 0, 1,  0, 1, 1,
+      1, 0, 1,  1, 0, 0,  1, 1, 0,
+      0, 1, 1,  1, 1, 0,  0, 1, 0,
+      1, 1, 1,  1, 0, 1,  1, 1, 0,
+      1, 1, 1,  1, 1, 0,  0, 1, 1,
+      1, 1, 1,  0, 1, 1,  1, 0, 1,
+    ];
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
   }
 
   private onNextTick(event: TickEvent): void {
@@ -214,9 +235,10 @@ export class Entity {
     gl.uniformMatrix4fv(renderer.uniforms.viewScreenTransform, false, viewScreenTransform);
 
     renderer.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
+    renderer.attrib({key: "vertexColor", buffer: this.colorBuffer, numComponents: 3});
 
-    const vertexCount = 3;
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
+    const vertexCount = 18;
+    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
 
     if (event.detail !== undefined) {
       this.tick(event.detail);
