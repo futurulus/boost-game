@@ -1,0 +1,43 @@
+// TODO: turn this into a tranformation matrix
+// https://physics.stackexchange.com/a/470031 eq (02)
+//   X = point = (t, x)
+//   U = reference = (g, -gu)  negative because this is an inverse/active transform
+//   X' = point.boost(reference) = (t', x')
+const [pointSpace, referenceSpace] = [point.space(), reference.space()];
+//   x' = x + g²/c²(g+1) (u·x) u - gt u
+//      = x + g/c²(g+1) (u·x) gu - t gu
+//      = x + [-gu·x/c²(g+1) + t] (-gu)
+//   t' = g(t - u·x/c²) = gt + -gu·x/c²
+
+//   px = point.x, rx = reference.x, ...
+[
+    px + rx * ((px * rx * C_INV_SQ + py * ry * C_INV_SQ) / (rt + 1) + pt),
+    py + ry * ((px * rx * C_INV_SQ + py * ry * C_INV_SQ) / (rt + 1) + pt),
+    px * rx * C_INV_SQ + py * ry * C_INV_SQ + pt * rt,
+];
+[
+    px * (1 + rx * rx * C_INV_SQ / (rt + 1)) + py * rx * ry * C_INV_SQ / (rt + 1)       + pt * rx,
+    px * rx * ry * C_INV_SQ / (rt + 1)       + py * (1 + ry * ry * C_INV_SQ / (rt + 1)) + pt * ry,
+    px * rx * C_INV_SQ                       + py * ry * C_INV_SQ                       + pt * rt,
+];
+[
+    1 + rx * rx * C_INV_SQ / (rt + 1),  rx * ry * C_INV_SQ / (rt + 1),        rx,
+    rx * ry * C_INV_SQ / (rt + 1),      1 + ry * ry * C_INV_SQ / (rt + 1),    ry,
+    rx * C_INV_SQ,                      ry * C_INV_SQ,                        rt,
+];
+
+// https://physics.stackexchange.com/a/588284
+[
+    1 + (rt - 1) * bx * bx / (b * b), (rt - 1) * bx * by / (b * b), rt * bx / C,
+    (rt - 1) * bx * by / (b * b), 1 + (rt - 1) * by * by / (b * b), rt * by / C,
+    rt * bx * C, rt * by * C, rt,
+];
+// g = 1/√(1 - b^2)
+// b^2 = 1 - 1/g^2 = (g^2 - 1) / g^2
+// (g-1) / b^2 = (g-1)g^2/(g^2 - 1)
+//             = g^2/(g + 1)
+[
+    1 + rx * rx * C_INV_SQ / (rt + 1),  rx * ry * C_INV_SQ / (rt + 1),        rx * C_INV_SQ,
+    rx * ry * C_INV_SQ / (rt + 1),      1 + ry * ry * C_INV_SQ / (rt + 1),    ry * C_INV_SQ,
+    rx,                      ry,                        rt,
+];

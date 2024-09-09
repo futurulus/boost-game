@@ -1,7 +1,8 @@
+import { mat3, mat4 } from "gl-matrix";
 import { lightConeIntersection, nowIntersection } from "./geometry";
 import { Game } from "./main";
 import { Obstacle } from "./obstacle";
-import { C, Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
+import { C, C_INV_SQ, Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
 
 const AXIS_SHRINK = 1e5;
 
@@ -155,34 +156,72 @@ export class Entity {
     this.positionBuffer = positionBuffer;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    const positions = [10, 10, -10, 10, 10, -10, -10, -10];
+    const positions = [1, 0, -1, 1, -1, -1];
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-    return positionBuffer;
   }
 
   private onNextTick(event: TickEvent): void {
     const gl = this.ctx;
     const renderer = this.game.renderer;
 
-    this.setPositionAttribute();
+    const {
+      cameraMode,
+      position: { x: cx, y: cy, t: ct },
+    } = this.game.player;
+    const { x, y, t } = this.visualPosition;
+    const { x: vx, y: vy } = this.velocity.vel2();
+    const { x: sx, y: sy } = this.scale;
+    const { width: w, height: h } = this.canvas;
 
     gl.useProgram(renderer.shader);
 
-    const { x, y } = this.viewPosition;
-    const { clientWidth: w, clientHeight: h } = this.canvas;
-    gl.uniformMatrix4fv(
-      renderer.uniforms.modelViewMatrix,
-      false,
-      [1 / w, 0, 0, 0,
-       0, 1 / h, 0, 0,
-       0, 0, 1, 0,
-       x / w, y / h, 0, 1],
-    );
+    gl.uniform1f(renderer.uniforms.cInvSq, C_INV_SQ);
+    gl.uniform1f(renderer.uniforms.sign, cameraMode === "future" ? 1 : -1);  // TODO: now camera mode
+    gl.uniform3fv(renderer.uniforms.entityPosition, [x, y, t]);
+    gl.uniform3fv(renderer.uniforms.viewPosition, [cx, cy, ct]);
+    gl.uniform2fv(renderer.uniforms.entityVelocity, [vx, vy]);
 
-    const offset = 0;
-    const vertexCount = 4;
-    gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
+    // Convert unscaled entity-relevant coordinates to world coordinates:
+    //   vertexTransform = boost * rotate * scale
+    const vertexTransform = mat3.create();
+    mat3.fromRotation(vertexTransform, this.orientation);
+    mat3.scale(vertexTransform, vertexTransform, [sx, sy]);
+    // We need to boost vertex offsets for objects that are moving relative to
+    // world coordinates because their length scale is assumed to be correct in
+    // the reference frame in which the object is stationary.
+    const boostMatrix = mat3.create();
+    mat3.multiply(
+      vertexTransform,
+      mat3.fromMat4(boostMatrix, this.createBoostMatrix(this.velocity)),
+      vertexTransform,
+    );
+    gl.uniformMatrix3fv(renderer.uniforms.vertexTransform, false, vertexTransform);
+
+    // Implement the camera (read these transformations in reverse order for
+    // more intuitive interpretation):
+    const viewScreenTransform = mat4.create();
+    // Transform world coordinates to normalized device coordinates [-1, 1]^3
+    mat4.ortho(viewScreenTransform, -w/2, w/2, -h/2, h/2, -1, 1);
+    // Force the z coordinate to be equal to the object's configured z-depth
+    const depth = 0;  // TODO: z-ordering of objects
+    mat4.translate(viewScreenTransform, viewScreenTransform, [0, 0, depth]);
+    mat4.scale(viewScreenTransform, viewScreenTransform, [1, 1, 0]);
+    // Adjust for the relativistic effects of the player's velocity by boosting
+    // to a frame in which the player is stationary
+    const viewBoostMatrix = this.createBoostMatrix(this.game.player.velocity.inv());
+    mat4.multiply(
+      viewScreenTransform,
+      viewScreenTransform,
+      viewBoostMatrix,
+    );
+    // Center the screen on the player
+    mat4.translate(viewScreenTransform, viewScreenTransform, [-cx, -cy, -ct]);
+    gl.uniformMatrix4fv(renderer.uniforms.viewScreenTransform, false, viewScreenTransform);
+
+    renderer.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
+
+    const vertexCount = 3;
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexCount);
 
     if (event.detail !== undefined) {
       this.tick(event.detail);
@@ -190,26 +229,16 @@ export class Entity {
     }
   }
 
-  private setPositionAttribute() {
-    const gl = this.ctx;
-    const { renderer } = this.game;
-
-    const numComponents = 2; // pull out 2 values per iteration
-    const type = gl.FLOAT; // the data in the buffer is 32bit floats
-    const normalize = false; // don't normalize
-    const stride = 0; // how many bytes to get from one set of values to the next
-    // 0 = use type and numComponents above
-    const offset = 0; // how many bytes inside the buffer to start from
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.vertexAttribPointer(
-      renderer.attribs.vertexPosition,
-      numComponents,
-      type,
-      normalize,
-      stride,
-      offset,
+  private createBoostMatrix(reference: Vec3) {
+    const { x: rx, y: ry, t: rt } = reference;
+    const boostFactor = C_INV_SQ / (rt + 1);
+    const boostMatrix = mat4.fromValues(
+      1 + rx * rx * boostFactor, rx * ry * boostFactor, rx * C_INV_SQ, 0,
+      rx * ry * boostFactor, 1 + ry * ry * boostFactor, ry * C_INV_SQ, 0,
+      rx, ry, rt, 0,
+      0, 0, 0, 1
     );
-    gl.enableVertexAttribArray(renderer.attribs.vertexPosition);
+    return boostMatrix;
   }
 
   /** Execute `draw` with the context transformed into entity-relative coordinates */

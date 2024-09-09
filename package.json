@@ -8,7 +8,8 @@
 		"typescript": "^4.6.4"
 	},
 	"dependencies": {
-		"collider2d": "^1.1.1"
+		"collider2d": "^1.1.1",
+		"gl-matrix": "^3.4.0"
 	},
 	"scripts": {
 		"build": "./esbuild.js",

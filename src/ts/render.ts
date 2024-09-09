@@ -2,12 +2,27 @@ import { TickEvent } from "./types";
 
 const DT_MAX = 0.1;
 
+interface RelativityUniforms {
+  cInvSq: WebGLUniformLocation;
+  sign: WebGLUniformLocation;
+  entityPosition: WebGLUniformLocation;
+  viewPosition: WebGLUniformLocation;
+  entityVelocity: WebGLUniformLocation;
+  vertexTransform: WebGLUniformLocation;
+  viewScreenTransform: WebGLUniformLocation;
+};
+
+interface RelativityAttribs {
+  vertexOffset: number;
+};
+
 export class Renderer {
   ctx: WebGLRenderingContext;
   canvas: HTMLCanvasElement;
   shader: WebGLProgram;
-  attribs: { [key: string]: number };
-  uniforms: { [key: string]: WebGLUniformLocation };
+
+  attribs: RelativityAttribs;
+  uniforms: RelativityUniforms;
 
   running: boolean = false;
   oldTimeStamp: number = 0;
@@ -16,8 +31,6 @@ export class Renderer {
     this.ctx = ctx;
     this.canvas = canvas;
     this.running = false;
-    this.attribs = {};
-    this.uniforms = {};
     this.compileShaders();
   }
 
@@ -27,18 +40,37 @@ export class Renderer {
     // Vertex shader
     const gl = this.ctx;
     const vertexShaderSource = `
-      attribute vec4 aVertexPosition;
-      uniform mat4 uModelViewMatrix;
-      varying lowp vec3 vVertexColor;
+      uniform float cInvSq, sign;
+      uniform vec3 entityPosition, viewPosition;
+      uniform vec2 entityVelocity;
+      uniform mat3 vertexTransform;
+      uniform mat4 viewScreenTransform;
+      attribute vec3 vertexOffset;
+
+      varying lowp vec3 vertexColor;
+
       void main() {
-        gl_Position = uModelViewMatrix * aVertexPosition;
-        vVertexColor = 0.5 * gl_Position.xyz + 0.5;
+        vec3 offset = vertexTransform * vertexOffset;
+        vec3 absPosition = entityPosition + offset;
+        vec3 relPosition = absPosition - viewPosition;
+        vec2 p0 = relPosition.xy - entityVelocity.xy * relPosition.z;
+        float p0DotVel = dot(p0, entityVelocity) * cInvSq;
+        float invGammaSq = 1. - dot(entityVelocity, entityVelocity) * cInvSq;
+
+        float t = (
+            p0DotVel + sign * sqrt(p0DotVel * p0DotVel + invGammaSq * dot(p0, p0) * cInvSq)
+        ) / invGammaSq + viewPosition.z - absPosition.z;
+        vec3 trueOffset = offset + t * vec3(entityVelocity, 1.);
+        vec3 truePosition = entityPosition + trueOffset;
+        gl_Position = viewScreenTransform * vec4(truePosition, 1.),
+        vertexColor = 0.5 * gl_Position.xyz + 0.5;
+        // vertexColor = 10. * trueOffset.z * vec3(-1., 0., 1.);
       }
     `;
     const fragmentShaderSource = `
-      varying lowp vec3 vVertexColor;
+      varying lowp vec3 vertexColor;
       void main() {
-        gl_FragColor = vec4(vVertexColor.rgb, 1.0);
+        gl_FragColor = vec4(vertexColor.rgb, 1.);
       }
     `;
     const vertexShader = this.loadShader(gl.VERTEX_SHADER, vertexShaderSource);
@@ -55,10 +87,25 @@ export class Renderer {
       )}`;
     }
 
-    this.attribs.vertexPosition = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-    const modelViewMatrix = gl.getUniformLocation(shaderProgram, "uModelViewMatrix");
-    if (modelViewMatrix === null) throw "Unable to find uModelViewMatrix location";
-    this.uniforms.modelViewMatrix = modelViewMatrix;
+    const uniforms = {
+      cInvSq: -1,
+      sign: -1,
+      entityPosition: -1,
+      viewPosition: -1,
+      entityVelocity: -1,
+      vertexTransform: -1,
+      viewScreenTransform: -1,
+    };
+    Object.keys(uniforms).forEach(key => {
+      const location = gl.getUniformLocation(shaderProgram, key);
+      if (location === null) throw `Unable to get uniform location for "${key}"`;
+      uniforms[key] = location;
+    });
+    this.uniforms = uniforms;
+
+    this.attribs = {
+      vertexOffset: gl.getAttribLocation(shaderProgram, "vertexOffset"),
+    };
 
     this.shader = shaderProgram;
   }
@@ -91,6 +138,27 @@ export class Renderer {
 
   stop() {
     this.running = false;
+  }
+
+  attrib(params: {key: keyof RelativityAttribs, buffer: WebGLBuffer, numComponents: number}) {
+    const { key, buffer, numComponents } = params;
+    const gl = this.ctx;
+
+    const type = gl.FLOAT;
+    const normalize = false;
+    const stride = 0; // 0 = use type and numComponents above
+    const offset = 0;
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.vertexAttribPointer(
+      this.attribs[key],
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset,
+    );
+    gl.enableVertexAttribArray(this.attribs[key]);
   }
 
   private nextFrame() {

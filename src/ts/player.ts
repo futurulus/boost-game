@@ -32,7 +32,7 @@ export class Player extends Entity {
   constructor(game: Game) {
     super(game, 'player');
     this.position = vec3(0, 0, 0);
-    this.scale = vec2(100, 100);
+    this.scale = vec2(100, 50);
     this.acceleration = 2000.0;
     this.range = 1.5;
     this.attackDuration = 200;
