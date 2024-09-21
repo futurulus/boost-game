@@ -38,13 +38,13 @@ export class Renderer {
 
     // Vertex shader
     const gl = this.ctx;
-    const vertexShaderSource = `
+    const vertexShaderSource = `#version 300 es
       uniform float cInvSq, sign;
       uniform vec2 entityVelocity2;
       uniform mat4 vertexTransform, viewScreenTransform;
-      attribute vec4 vertexOffset, vertexColor;
+      in vec4 vertexOffset, vertexColor;
 
-      varying lowp vec4 outColor;
+      out lowp vec4 interpColor;
 
       void main() {
         vec3 relPosition = (vertexTransform * vertexOffset).xyz;
@@ -57,13 +57,16 @@ export class Renderer {
         ) / invGammaSq - relPosition.z;
         vec3 trueRelPosition = relPosition + dt * vec3(entityVelocity2, 1.);
         gl_Position = viewScreenTransform * vec4(trueRelPosition, 1.),
-        outColor = vertexColor;
+        interpColor = vertexColor;
       }
     `;
-    const fragmentShaderSource = `
-      varying lowp vec4 outColor;
+    const fragmentShaderSource = `#version 300 es
+      in lowp vec4 interpColor;
+
+      out lowp vec4 outColor;
+
       void main() {
-        gl_FragColor = outColor;
+        outColor = interpColor;
       }
     `;
     const vertexShader = this.loadShader(gl.VERTEX_SHADER, vertexShaderSource);
