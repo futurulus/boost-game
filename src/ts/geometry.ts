@@ -4,9 +4,15 @@ export const lightConeIntersection = (
   linePosition: Vec3, lineVelocity: Vec3, lightConePosition: Vec3, which: "past" | "future" = "past"
 ) => {
   const lineVel2 = lineVelocity.vel2();
+
+  // This is equivalent to
+  //   const p0 = nowIntersection(linePosition, lineVelocity, lightConePosition).minus(lightConePosition).space();
+  // but has been inlined for speed.
+  const relPosition = linePosition.minus(lightConePosition);
   /** xy coordinates (relative to lightConePosition) of the point on the line
       where t = lightConePosition.t */
-  const p0 = nowIntersection(linePosition, lineVelocity, lightConePosition).minus(lightConePosition).space();
+  const p0 = relPosition.space().plus(lineVel2.times(-relPosition.t));
+
   const dot = p0.dot(lineVel2) * C_INV_SQ;
   const invGammaSq = 1 - lineVel2.magSq() * C_INV_SQ;
 
