@@ -5,11 +5,13 @@ const DT_MAX = 0.1;
 
 type UIUniforms = {
   color: WebGLUniformLocation;
+  image: WebGLUniformLocation;
   viewScreenTransform: WebGLUniformLocation;
 };
 
 type UIAttribs = {
   vertexPosition: number;
+  texCoord: number;
 }
 
 type LightConeUniforms = {
@@ -26,7 +28,7 @@ type LightConeAttribs = {
 };
 
 export class Renderer {
-  ctx: WebGLRenderingContext;
+  ctx: WebGL2RenderingContext;
   canvas: HTMLCanvasElement;
 
   ui: Shader<UIUniforms, UIAttribs>;
@@ -35,7 +37,7 @@ export class Renderer {
   running: boolean = false;
   oldTimeStamp: number = 0;
 
-  constructor(ctx: WebGLRenderingContext, canvas: HTMLCanvasElement) {
+  constructor(ctx: WebGL2RenderingContext, canvas: HTMLCanvasElement) {
     this.ctx = ctx;
     this.canvas = canvas;
     this.running = false;
@@ -127,21 +129,27 @@ export class Renderer {
       uniform vec3 color;
       uniform mat4 viewScreenTransform;
       in vec4 vertexPosition;
+      in vec2 texCoord;
 
       out lowp vec4 interpColor;
+      out lowp vec2 interpTexCoord;
 
       void main() {
         gl_Position = viewScreenTransform * vertexPosition;
         interpColor = vec4(color, 1.);
+        interpTexCoord = texCoord;
       }
     `;
     const fragmentShaderSource = `#version 300 es
       in lowp vec4 interpColor;
+      in lowp vec2 interpTexCoord;
+
+      uniform sampler2D image;
 
       out lowp vec4 outColor;
 
       void main() {
-        outColor = interpColor;
+        outColor = interpColor * texture(image, interpTexCoord);
       }
     `;
     const vertexShader = this.loadShader(gl.VERTEX_SHADER, vertexShaderSource);
@@ -160,6 +168,7 @@ export class Renderer {
 
     const uniforms = {
       color: -1,
+      image: -1,
       viewScreenTransform: -1,
     };
     Object.keys(uniforms).forEach(key => {
@@ -169,6 +178,7 @@ export class Renderer {
     });
 
     const attribs = {
+      texCoord: gl.getAttribLocation(shaderProgram, "texCoord"),
       vertexPosition: gl.getAttribLocation(shaderProgram, "vertexPosition"),
     };
     this.ui = new Shader<UIUniforms, UIAttribs>(this.ctx, shaderProgram, uniforms, attribs);
@@ -202,6 +212,58 @@ export class Renderer {
 
   stop() {
     this.running = false;
+  }
+
+  loadTexture(url) {
+    // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
+    const gl = this.ctx;
+
+    const texture = gl.createTexture();
+    if (texture === null) throw "Unable to create texture";
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Because images have to be downloaded over the internet
+    // they might take a moment until they are ready.
+    // Until then put a single pixel in the texture so we can
+    // use it immediately. When the image has finished downloading
+    // we'll update the texture with the contents of the image.
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      level,
+      internalFormat,
+      width,
+      height,
+      border,
+      srcFormat,
+      srcType,
+      pixel,
+    );
+
+    const image = new Image();
+    image.onload = () => {
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        internalFormat,
+        srcFormat,
+        srcType,
+        image,
+      );
+
+      gl.generateMipmap(gl.TEXTURE_2D);
+    };
+    image.src = url;
+
+    return texture;
   }
 
   private nextFrame() {

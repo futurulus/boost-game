@@ -16,6 +16,8 @@ type Props = {
 export class ImageButton {
   props: Props;
   positionBuffer: WebGLBuffer;
+  texCoordBuffer: WebGLBuffer;
+  texture: WebGLTexture;
 
   private hitPath: Path2D
 
@@ -23,11 +25,27 @@ export class ImageButton {
     this.props = props;
 
     const { position, scale } = props;
-    const { canvas, ctx: gl } = props.renderer;
+    const { canvas } = props.renderer;
 
     this.hitPath = new Path2D();
     this.hitPath.moveTo(position.x + scale.x, position.y);
     this.hitPath.ellipse(position.x, position.y, scale.x, scale.y, 0, 0, 2 * Math.PI);
+
+    this.initBuffers();
+
+    canvas.addEventListener("click", e => this.onClick(e));
+    canvas.addEventListener("tick", () => this.draw());
+  }
+
+  onClick(e: MouseEvent) {
+    const { onclick, renderer } = this.props;
+    const { x, y } = getMousePos(e.clientX, e.clientY, renderer.canvas);
+    if (!this.containsPoint(x, y)) return;
+    onclick();
+  }
+
+  private initBuffers() {
+    const gl = this.props.renderer.ctx;
 
     const positionBuffer = gl.createBuffer();
     if (positionBuffer === null) throw "Unable to create position buffer";
@@ -39,15 +57,24 @@ export class ImageButton {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
     this.positionBuffer = positionBuffer;
 
-    canvas.addEventListener("click", e => this.onClick(e));
-    canvas.addEventListener("tick", () => this.draw());
-  }
+    this.texture = this.props.renderer.loadTexture(this.props.image);
 
-  onClick(e: MouseEvent) {
-    const { onclick, renderer } = this.props;
-    const { x, y } = getMousePos(e.clientX, e.clientY, renderer.canvas);
-    if (!this.containsPoint(x, y)) return;
-    onclick();
+    // Flip image pixels into the bottom-to-top order that WebGL expects.
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+    const texCoordBuffer = gl.createBuffer();
+    if (texCoordBuffer === null) throw "Unable to create texture coordinate buffer";
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+
+    const textureCoordinates = [
+      1, 0,  0, 0,  0, 1,
+      0, 1,  1, 1,  1, 0,
+    ];
+
+    gl.bufferData(
+      gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), gl.STATIC_DRAW
+    );
+    this.texCoordBuffer = texCoordBuffer;
   }
 
   private containsPoint(x: number, y: number): boolean {
@@ -76,7 +103,12 @@ export class ImageButton {
     mat4.scale(viewScreenTransform, viewScreenTransform, [scale.x, scale.y, 0]);
     gl.uniformMatrix4fv(ui.uniforms.viewScreenTransform, false, viewScreenTransform);
 
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.uniform1i(ui.uniforms.image, 0);
+
     ui.attrib({key: "vertexPosition", buffer: this.positionBuffer, numComponents: 2});
+    ui.attrib({key: "texCoord", buffer: this.texCoordBuffer, numComponents: 2});
 
     const vertexCount = 6;
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
