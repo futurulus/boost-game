@@ -182,6 +182,27 @@ export class Entity {
   }
 
   private onNextTick(event: TickEvent): void {
+    if (event.detail !== undefined) {
+      this.tick(event.detail);
+      this.drawReal();
+    }
+  }
+
+  private createBoostMatrix(reference: Vec3) {
+    const { x: rx, y: ry, t: rt } = reference;
+    const boostFactor = C_INV_SQ / (rt + 1);
+    const boostMatrix = mat4.fromValues(
+      1 + rx * rx * boostFactor, rx * ry * boostFactor, rx * C_INV_SQ, 0,
+      rx * ry * boostFactor, 1 + ry * ry * boostFactor, ry * C_INV_SQ, 0,
+      rx, ry, rt, 0,
+      0, 0, 0, 1
+    );
+    return boostMatrix;
+  }
+
+  protected draw(): void { }
+
+  private drawReal(): void {
     const gl = this.ctx;
     const renderer = this.game.renderer;
 
@@ -194,11 +215,12 @@ export class Entity {
     const { x: sx, y: sy } = this.scale;
     const { width: w, height: h } = this.canvas;
 
-    gl.useProgram(renderer.shader);
+    const { program, uniforms, attribs } = renderer.lightCone;
+    gl.useProgram(program);
 
-    gl.uniform1f(renderer.uniforms.cInvSq, C_INV_SQ);
-    gl.uniform1f(renderer.uniforms.sign, cameraMode === "future" ? 1 : -1);  // TODO: now camera mode
-    gl.uniform2fv(renderer.uniforms.entityVelocity2, [vx2, vy2]);
+    gl.uniform1f(uniforms.cInvSq, C_INV_SQ);
+    gl.uniform1f(uniforms.sign, cameraMode === "future" ? 1 : -1);  // TODO: now camera mode
+    gl.uniform2fv(uniforms.entityVelocity2, [vx2, vy2]);
 
     // Convert unscaled entity-relative coordinates to camera-relative coordinates:
     //   vertexTransform = translate * boost * rotate * scale
@@ -214,7 +236,7 @@ export class Entity {
     );
     mat4.rotate(vertexTransform, vertexTransform, this.orientation, [0, 0, 1]);
     mat4.scale(vertexTransform, vertexTransform, [sx, sy, 1]);
-    gl.uniformMatrix4fv(renderer.uniforms.vertexTransform, false, vertexTransform);
+    gl.uniformMatrix4fv(uniforms.vertexTransform, false, vertexTransform);
 
     // Implement the camera (read these transformations in reverse order for
     // more intuitive interpretation):
@@ -232,80 +254,14 @@ export class Entity {
       viewScreenTransform,
       this.createBoostMatrix(this.game.player.velocity.inv()),
     );
-    gl.uniformMatrix4fv(renderer.uniforms.viewScreenTransform, false, viewScreenTransform);
+    gl.uniformMatrix4fv(uniforms.viewScreenTransform, false, viewScreenTransform);
 
-    renderer.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
-    renderer.attrib({key: "vertexColor", buffer: this.colorBuffer, numComponents: 3});
+    renderer.lightCone.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
+    renderer.lightCone.attrib({key: "vertexColor", buffer: this.colorBuffer, numComponents: 3});
 
     const vertexCount = 18;
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
-
-    if (event.detail !== undefined) {
-      this.tick(event.detail);
-      this.draw();
-    }
   }
-
-  private createBoostMatrix(reference: Vec3) {
-    const { x: rx, y: ry, t: rt } = reference;
-    const boostFactor = C_INV_SQ / (rt + 1);
-    const boostMatrix = mat4.fromValues(
-      1 + rx * rx * boostFactor, rx * ry * boostFactor, rx * C_INV_SQ, 0,
-      rx * ry * boostFactor, 1 + ry * ry * boostFactor, ry * C_INV_SQ, 0,
-      rx, ry, rt, 0,
-      0, 0, 0, 1
-    );
-    return boostMatrix;
-  }
-
-  /** Execute `draw` with the context transformed into entity-relative coordinates */
-  protected drawLocal(draw: () => void): void {
-    /*
-    this.ctx.save();
-
-    // Screen-center coordinates
-    const { width, height } = this.canvas;
-    this.ctx.translate(width / 2, height / 2);
-    // -y for right-hand coordinate system
-    this.ctx.scale(C, -C);
-
-    // Camera position
-    const { position: playerPos, velocity: playerVel, cameraMode } = this.game.player;
-    const viewPos = this.viewPosition;
-    this.ctx.translate(viewPos.x, viewPos.y)
-
-    // Relativistic distortion
-    const intersection = (pos: Vec3): Vec3 => (
-      cameraMode === "visual"
-        ? lightConeIntersection(pos, this.velocity, playerPos)
-        : cameraMode === "now"
-        ? nowIntersection(pos, this.velocity, playerPos, playerVel)
-        : lightConeIntersection(pos, this.velocity, playerPos, "future")
-    );
-    const xEps = intersection(this.position.plus(vec3(0, 1 / AXIS_SHRINK, 0).boost(this.velocity)));
-    const yEps = intersection(this.position.plus(vec3(0, 0, 1 / AXIS_SHRINK).boost(this.velocity)));
-    const invVel = playerVel.inv();
-    const relScaleX = xEps.minus(playerPos).boost(invVel).minus(viewPos);
-    const relScaleY = yEps.minus(playerPos).boost(invVel).minus(viewPos);
-    this.ctx.transform(
-      relScaleX.x * AXIS_SHRINK, relScaleX.y * AXIS_SHRINK,
-      relScaleY.x * AXIS_SHRINK, relScaleY.y * AXIS_SHRINK,
-      0, 0,
-    );
-
-    // Entity rotation and scaling
-    this.ctx.rotate(this.orientation);
-    this.ctx.scale(this.scale.x, this.scale.y);
-    */
-
-    draw();
-
-    /*
-    this.ctx.restore();
-    */
-  }
-
-  protected draw(): void { }
 
   protected tick(tick: Tick): void {
     if (this.active) {
