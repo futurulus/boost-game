@@ -42,6 +42,10 @@ export class Renderer {
     this.canvas = canvas;
     this.running = false;
     this.compileShaders();
+
+    ctx.enable(ctx.DEPTH_TEST);
+    ctx.enable(ctx.BLEND);
+    ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
   }
 
   private compileShaders() {

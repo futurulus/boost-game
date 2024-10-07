@@ -98,7 +98,7 @@ export class ImageButton {
     // Transform screen coordinates to normalized device coordinates [-1, 1]^3
     mat4.ortho(viewScreenTransform, 0, w, h, 0, -1, 1);
     // Force the z coordinate to be equal to the object's configured z-depth
-    const depth = -0.5;  // TODO: z-ordering of objects
+    const depth = 0.5;  // TODO: z-ordering of objects
     mat4.translate(viewScreenTransform, viewScreenTransform, [position.x, position.y, depth]);
     mat4.scale(viewScreenTransform, viewScreenTransform, [scale.x, scale.y, 0]);
     gl.uniformMatrix4fv(ui.uniforms.viewScreenTransform, false, viewScreenTransform);

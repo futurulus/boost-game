@@ -25,7 +25,7 @@ export class Game {
   renderer: Renderer;
 
   constructor(canvas: HTMLCanvasElement) {
-    const ctx = canvas.getContext("webgl2");
+    const ctx = canvas.getContext("webgl2", { alpha: false });
     if (ctx === null) throw new Error("Can't get context from canvas!");
 
     this.renderer = new Renderer(ctx, canvas);
