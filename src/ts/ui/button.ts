@@ -13,6 +13,8 @@ type Props = {
   onclick: () => void;
 }
 
+let backgroundTexture: WebGLTexture | null = null;
+
 export class ImageButton {
   props: Props;
   positionBuffer: WebGLBuffer;
@@ -58,6 +60,9 @@ export class ImageButton {
     this.positionBuffer = positionBuffer;
 
     this.texture = this.props.renderer.loadTexture(this.props.image);
+    if (backgroundTexture === null) {
+      backgroundTexture = this.props.renderer.loadTexture("assets/button.png");
+    }
 
     // Flip image pixels into the bottom-to-top order that WebGL expects.
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -91,8 +96,6 @@ export class ImageButton {
 
     gl.useProgram(ui.program);
 
-    gl.uniform3fv(ui.uniforms.color, color);
-
     const viewScreenTransform = mat4.create();
     const { width: w, height: h } = canvas;
     // Transform screen coordinates to normalized device coordinates [-1, 1]^3
@@ -105,30 +108,25 @@ export class ImageButton {
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.uniform1i(ui.uniforms.image, 0);
+    if (backgroundTexture !== null) {
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, backgroundTexture);
+    }
 
     ui.attrib({key: "vertexPosition", buffer: this.positionBuffer, numComponents: 2});
     ui.attrib({key: "texCoord", buffer: this.texCoordBuffer, numComponents: 2});
 
     const vertexCount = 6;
-    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
-    /*
 
-    const selected = isSelected();
-    if (selected) {
-      ctx.fillStyle = color;
-      ctx.fill(this.hitPath)
-
-      ctx.strokeStyle = ctx.fillStyle = 'black';
-    } else {
-      ctx.strokeStyle = ctx.fillStyle = color;
+    const drawSelected = isSelected() && backgroundTexture !== null;
+    if (drawSelected) {
+      gl.uniform1i(ui.uniforms.image, 1);
+      gl.uniform3fv(ui.uniforms.color, color);
+      gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
     }
 
-    ctx.save();
-    ctx.translate(position.x, position.y);
-    ctx.scale(scale.x, scale.y);
-    draw(ctx);
-    ctx.restore();
-    */
+    gl.uniform1i(ui.uniforms.image, 0);
+    gl.uniform3fv(ui.uniforms.color, drawSelected ? [0, 0, 0] : color);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 }

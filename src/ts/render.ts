@@ -44,6 +44,7 @@ export class Renderer {
     this.compileShaders();
 
     ctx.enable(ctx.DEPTH_TEST);
+    ctx.depthFunc(ctx.LEQUAL);
     ctx.enable(ctx.BLEND);
     ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
   }
