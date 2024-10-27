@@ -6,7 +6,7 @@ import { C, vec2, Vec2, vec3, Vec3 } from "../types";
 
 const ARROW_RADIUS = 10;
 const MAX_SCREEN_BOOST = 400;
-const MAX_BOOST = 1.0;
+const MAX_BOOST = C;
 
 export class BoostHud {
   private ctx: WebGLRenderingContext;
