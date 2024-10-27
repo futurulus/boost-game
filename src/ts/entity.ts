@@ -3,6 +3,7 @@ import { lightConeIntersection, nowIntersection } from "./geometry";
 import { Game } from "./main";
 import { Obstacle } from "./obstacle";
 import { C, C_INV_SQ, Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
+import { LightConeUniforms } from "./render";
 
 const AXIS_SHRINK = 1e5;
 
@@ -208,24 +209,35 @@ export class Entity {
 
     const {
       cameraMode,
+      velocity: cameraVelocity,
       position: { x: cx, y: cy, t: ct },
     } = this.game.player;
     const { x, y, t } = this.visualPosition;
-    const { x: vx2, y: vy2 } = this.velocity.vel2();
     const { x: sx, y: sy } = this.scale;
     const { width: w, height: h } = this.canvas;
 
-    const { program, uniforms, attribs } = renderer.lightCone;
+    const shader = (cameraMode === "now" ? renderer.now : renderer.lightCone);
+    const { program, uniforms } = shader;
     gl.useProgram(program);
-
-    gl.uniform1f(uniforms.cInvSq, C_INV_SQ);
-    gl.uniform1f(uniforms.sign, cameraMode === "future" ? 1 : -1);  // TODO: now camera mode
-    gl.uniform2fv(uniforms.entityVelocity2, [vx2, vy2]);
 
     // Convert unscaled entity-relative coordinates to camera-relative coordinates:
     //   vertexTransform = translate * boost * rotate * scale
-    const vertexTransform = mat4.create();
-    mat4.fromTranslation(vertexTransform, [x - cx, y - cy, t - ct]);
+    let vertexTransform: mat4;
+    if (cameraMode === "now") {
+      // Adjust for the relativistic effects of the player's velocity by
+      // boosting to a frame in which the player is stationary
+
+      // This is in the vertex transform for the now-scope (but in the
+      // view-screen transform for visual and future) so we can compute the "now
+      // position" or "p0" (intersection of the extrapolated trajectory with
+      // t=0) in the camera reference frame without adding another matrix
+      // multiply.
+      vertexTransform = this.createBoostMatrix(this.game.player.velocity.inv()),
+      mat4.translate(vertexTransform, vertexTransform, [x - cx, y - cy, t - ct])
+    } else {
+      vertexTransform = mat4.create();
+      mat4.fromTranslation(vertexTransform, [x - cx, y - cy, t - ct])
+    }
     // We need to boost vertex offsets for objects that are moving relative to
     // world coordinates because their length scale is assumed to be correct in
     // the reference frame in which the object is stationary.
@@ -238,6 +250,18 @@ export class Entity {
     mat4.scale(vertexTransform, vertexTransform, [sx, sy, 1]);
     gl.uniformMatrix4fv(uniforms.vertexTransform, false, vertexTransform);
 
+    if (cameraMode === "now") {
+      // Also transform the entity velocity to camera-relative coordinates if
+      // we're in now-scope mode
+      const { x: vx2, y: vy2 } = this.velocity.boost(cameraVelocity.inv()).vel2();
+      gl.uniform2fv(uniforms.entityVelocity2, [vx2, vy2]);
+    } else {
+      const { x: vx2, y: vy2 } = this.velocity.vel2();
+      gl.uniform2fv(uniforms.entityVelocity2, [vx2, vy2]);
+
+      gl.uniform1f((uniforms as LightConeUniforms).sign, cameraMode === "future" ? 1 : -1);
+    }
+
     // Implement the camera (read these transformations in reverse order for
     // more intuitive interpretation):
     const viewScreenTransform = mat4.create();
@@ -247,17 +271,19 @@ export class Entity {
     const depth = 0;  // TODO: z-ordering of objects
     mat4.translate(viewScreenTransform, viewScreenTransform, [0, 0, depth]);
     mat4.scale(viewScreenTransform, viewScreenTransform, [1, 1, 0]);
-    // Adjust for the relativistic effects of the player's velocity by boosting
-    // to a frame in which the player is stationary
-    mat4.multiply(
-      viewScreenTransform,
-      viewScreenTransform,
-      this.createBoostMatrix(this.game.player.velocity.inv()),
-    );
+    if (cameraMode !== "now") {
+      // Adjust for the relativistic effects of the player's velocity by boosting
+      // to a frame in which the player is stationary
+      mat4.multiply(
+        viewScreenTransform,
+        viewScreenTransform,
+        this.createBoostMatrix(this.game.player.velocity.inv()),
+      );
+    }
     gl.uniformMatrix4fv(uniforms.viewScreenTransform, false, viewScreenTransform);
 
-    renderer.lightCone.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
-    renderer.lightCone.attrib({key: "vertexColor", buffer: this.colorBuffer, numComponents: 3});
+    shader.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
+    shader.attrib({key: "vertexColor", buffer: this.colorBuffer, numComponents: 3});
 
     const vertexCount = 18;
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);

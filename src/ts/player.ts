@@ -239,8 +239,8 @@ export class Player extends Entity {
   }
 
   private turn(): void {
-    const orientationTarget = this.game.opponent.position || vec3(0, 0, 0);
-    const angle = Math.atan2(orientationTarget.y - this.position.y, orientationTarget.x - this.position.x);
+    const orientationTarget = this.game.opponent.viewPosition || vec3(0, 0, 0);
+    const angle = Math.atan2(orientationTarget.y, orientationTarget.x);
     this.orientation = angle;
   }
 
