@@ -198,7 +198,7 @@ export class Renderer {
     // Vertex shader
     const gl = this.ctx;
     const vertexShaderSource = `#version 300 es
-      uniform vec3 color;
+      uniform vec4 color;
       uniform mat4 viewScreenTransform;
       in vec4 vertexPosition;
       in vec2 texCoord;
@@ -208,7 +208,7 @@ export class Renderer {
 
       void main() {
         gl_Position = viewScreenTransform * vertexPosition;
-        interpColor = vec4(color, 1.);
+        interpColor = color;
         interpTexCoord = texCoord;
       }
     `;
@@ -286,7 +286,7 @@ export class Renderer {
     this.running = false;
   }
 
-  loadTexture(url) {
+  loadTexture(url: string | null) {
     // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
     const gl = this.ctx;
 
@@ -299,6 +299,9 @@ export class Renderer {
     // Until then put a single pixel in the texture so we can
     // use it immediately. When the image has finished downloading
     // we'll update the texture with the contents of the image.
+    //
+    // Passing url=null simply returns this 1-pixel texture (useful for
+    // solid-color UI elements).
     const level = 0;
     const internalFormat = gl.RGBA;
     const width = 1;
@@ -306,7 +309,7 @@ export class Renderer {
     const border = 0;
     const srcFormat = gl.RGBA;
     const srcType = gl.UNSIGNED_BYTE;
-    const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
+    const pixel = new Uint8Array([255, 255, 255, 255]); // opaque white
     gl.texImage2D(
       gl.TEXTURE_2D,
       level,
@@ -318,6 +321,8 @@ export class Renderer {
       srcType,
       pixel,
     );
+
+    if (url === null) return texture;
 
     const image = new Image();
     image.onload = () => {

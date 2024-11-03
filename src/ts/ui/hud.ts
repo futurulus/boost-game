@@ -1,3 +1,4 @@
+import { mat4 } from "gl-matrix";
 import { Entity } from "../entity";
 import { getMousePos } from "../gui";
 import { Player } from "../player";
@@ -9,39 +10,69 @@ const MAX_SCREEN_BOOST = 400;
 const MAX_BOOST = C;
 
 export class BoostHud {
-  private ctx: WebGLRenderingContext;
-  private canvas: HTMLCanvasElement;
+  private renderer: Renderer;
   private player: Player;
   private entities: Entity[];
+  private texture: WebGLTexture;
+  private positionBuffer: WebGLBuffer;
+  private texCoordBuffer: WebGLBuffer;
 
   constructor(renderer: Renderer, player: Player, entities: Entity[]) {
     this.player = player;
-    this.ctx = renderer.ctx;
-    this.canvas = renderer.canvas;
+    this.renderer = renderer;
     this.entities = entities;
 
-    this.canvas.addEventListener("mousedown", (event: MouseEvent) => {
-      const mousePos = getMousePos(event.clientX, event.clientY, this.canvas, "world");
+    this.initBuffers();
+
+    const canvas = renderer.canvas;
+    canvas.addEventListener("mousedown", (event: MouseEvent) => {
+      const mousePos = getMousePos(event.clientX, event.clientY, canvas, "world");
       if (mousePos.mag() < player.scale.x) {
         this.player.action.plannedBoost = this.clipPlannedBoost(mousePos);
       }
     });
 
-    this.canvas.addEventListener("mousemove", (event: MouseEvent) => {
+    canvas.addEventListener("mousemove", (event: MouseEvent) => {
       if (this.player.action.plannedBoost === null) return;
 
-      const mousePos = getMousePos(event.clientX, event.clientY, this.canvas, "world");
+      const mousePos = getMousePos(event.clientX, event.clientY, canvas, "world");
       this.player.action.plannedBoost = this.clipPlannedBoost(mousePos);
     });
 
-    this.canvas.addEventListener("mouseup", (event: MouseEvent) => {
+    canvas.addEventListener("mouseup", (event: MouseEvent) => {
       if (this.player.action.plannedBoost === null) return;
       this.player.velocity = this.screenToBoost(this.player.action.plannedBoost)
         .boost(this.player.velocity);
       this.player.action.plannedBoost = null;
     });
 
-    this.canvas.addEventListener("tick", () => this.draw());
+    canvas.addEventListener("tick", () => this.draw());
+  }
+
+  private initBuffers() {
+    const gl = this.renderer.ctx;
+
+    const positionBuffer = gl.createBuffer();
+    if (positionBuffer === null) throw "Unable to create position buffer";
+    this.positionBuffer = positionBuffer;
+
+    this.texture = this.renderer.loadTexture(null);
+
+    // Flip image pixels into the bottom-to-top order that WebGL expects.
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+
+    const texCoordBuffer = gl.createBuffer();
+    if (texCoordBuffer === null) throw "Unable to create texture coordinate buffer";
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+
+    const textureCoordinates = [
+      0, 0,  0, 0,  0, 0,  0, 0
+    ];
+
+    gl.bufferData(
+      gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), gl.STATIC_DRAW
+    );
+    this.texCoordBuffer = texCoordBuffer;
   }
 
   private clipPlannedBoost(screen: Vec2): Vec2 {
@@ -67,63 +98,72 @@ export class BoostHud {
 
   draw() {
     if (this.player.action.plannedBoost !== null) {
-      /*
-      this.ctx.save();
+      const { ctx: gl, canvas, ui } = this.renderer;
 
-      const { width, height } = this.canvas;
+      gl.useProgram(ui.program);
+
+      const viewScreenTransform = mat4.create();
+      const { width: w, height: h } = canvas;
+      // Transform screen coordinates to normalized device coordinates [-1, 1]^3
+      mat4.ortho(viewScreenTransform, -w/2, w/2, -h/2, h/2, -1, 1);
+      // Force the z coordinate to be equal to the object's configured z-depth
+      const depth = 0.4;  // TODO: z-ordering of objects
+      mat4.translate(viewScreenTransform, viewScreenTransform, [0, 0, depth]);
+      mat4.scale(viewScreenTransform, viewScreenTransform, [1, 1, 0]);
+      gl.uniformMatrix4fv(ui.uniforms.viewScreenTransform, false, viewScreenTransform);
+
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
       const { plannedBoost: screen } = this.player.action;
       const plannedBoost = this.screenToBoost(screen);
+      const plannedVel = plannedBoost.boost(this.player.velocity);
+      this.entities.forEach(e => {
+        if (e.id === "player" || e.id === "playerTimer") return;
+        const entityVel = this.boostToScreen(e.velocity.boost(plannedVel.inv()).inv());
+        const entityPos = e.viewPosition.space();
+        this.drawArrow(entityPos, entityPos.plus(entityVel), [1, 0.5, 0, 0.5]);
+      });
+
+      // Draw the player arrow last so it's easiest to see
+      this.drawArrow(vec2(0, 0), screen, [0, 0.5, 1, 0.5]);
+      /*
+      // TODO: cents label
       const cents = plannedBoost.space().mag() * 100;
       const decimalPlaces = cents < 2 ? 1 : 0;
       const textPos = screen.plus(screen.times(30 / screen.mag()));
       this.ctx.fillStyle = "rgba(0, 127, 255, 0.5)";
       this.ctx.font = "40px PressStart2P";
       this.ctx.fillText(`${cents.toFixed(decimalPlaces)}¢`, width / 2 + textPos.x * C, height / 2 - textPos.y * C);
-
-      this.ctx.translate(width / 2, height / 2);
-      this.ctx.scale(C, -C);
-
-      this.ctx.lineWidth = 2;
-      this.drawArrow(vec2(0, 0), screen);
-
-      this.ctx.fillStyle = "rgba(255, 127, 0, 0.5)";
-
-      const plannedVel = plannedBoost.boost(this.player.velocity);
-      this.entities.forEach(e => {;
-        const entityVel = this.boostToScreen(e.velocity.boost(plannedVel.inv()).inv());
-        const entityPos = e.viewPosition.space();
-        this.drawArrow(entityPos, entityPos.plus(entityVel));
-      });
-
-      this.ctx.restore();
       */
     }
   }
 
-  drawArrow(start: Vec2, end: Vec2) {
-    /*
-    const diff = end.minus(start);
-    const lengthSq = diff.magSq();
-    if (lengthSq <= ARROW_RADIUS * ARROW_RADIUS) {
-      // Too short for arrow, just draw a circle
-      this.ctx.beginPath();
-      this.ctx.arc(start.x, start.y, ARROW_RADIUS, 0, 2 * Math.PI)
-      this.ctx.fill();
-      return;
-    }
+  drawArrow(start: Vec2, end: Vec2, color: [number, number, number, number]) {
+    const { ctx: gl, ui } = this.renderer;
 
-    //   x
-    //   |\ L
-    //   +-O
-    // 90° ha
-    //    R
-    const direction = Math.atan2(diff.y, diff.x);
-    const halfAngle = Math.acos(ARROW_RADIUS / Math.sqrt(lengthSq));
-    this.ctx.beginPath();
-    this.ctx.arc(start.x, start.y, ARROW_RADIUS, direction + halfAngle, direction - halfAngle);
-    this.ctx.lineTo(end.x, end.y);
-    this.ctx.closePath();
-    this.ctx.fill();
-    */
+    const diff = end.minus(start);
+    const length = diff.mag();
+    // Normalized diff, chopped down to ARROW_RADIUS (or extended, or just set
+    // to the +x direction to avoid division by 0)
+    const nd = length >= 1 ? diff.times(ARROW_RADIUS / length) : vec2(ARROW_RADIUS, 0);
+    // If too short for arrow, just draw a square
+    const endPoint = length > ARROW_RADIUS ? end : start.plus(nd);
+    const positions = [
+      endPoint.x, endPoint.y,
+      start.x - nd.y, start.y + nd.x,
+      start.x - nd.x, start.y - nd.y,
+      start.x + nd.y, start.y - nd.x,
+    ];
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    ui.attrib({key: "vertexPosition", buffer: this.positionBuffer, numComponents: 2});
+    ui.attrib({key: "texCoord", buffer: this.texCoordBuffer, numComponents: 2});
+
+    const vertexCount = 4;
+
+    gl.uniform1i(ui.uniforms.image, 0);
+    gl.uniform4fv(ui.uniforms.color, color);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, vertexCount);
   }
 }

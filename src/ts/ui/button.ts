@@ -7,7 +7,7 @@ type Props = {
   renderer: Renderer;
   position: Vec2;
   scale: Vec2;
-  color: [number, number, number];
+  color: [number, number, number, number];
   image: string;
   isSelected: () => boolean;
   onclick: () => void;
@@ -121,12 +121,12 @@ export class ImageButton {
     const drawSelected = isSelected() && backgroundTexture !== null;
     if (drawSelected) {
       gl.uniform1i(ui.uniforms.image, 1);
-      gl.uniform3fv(ui.uniforms.color, color);
+      gl.uniform4fv(ui.uniforms.color, color);
       gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
     }
 
     gl.uniform1i(ui.uniforms.image, 0);
-    gl.uniform3fv(ui.uniforms.color, drawSelected ? [0, 0, 0] : color);
+    gl.uniform4fv(ui.uniforms.color, drawSelected ? [0, 0, 0, 1] : color);
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 }
