@@ -4,6 +4,7 @@ import { getMousePos } from "../gui";
 import { Player } from "../player";
 import { Renderer } from "../render";
 import { C, vec2, Vec2, vec3, Vec3 } from "../types";
+import { Text } from "./text";
 
 const ARROW_RADIUS = 10;
 const MAX_SCREEN_BOOST = 400;
@@ -16,11 +17,21 @@ export class BoostHud {
   private texture: WebGLTexture;
   private positionBuffer: WebGLBuffer;
   private texCoordBuffer: WebGLBuffer;
+  private centsText: Text;
 
   constructor(renderer: Renderer, player: Player, entities: Entity[]) {
     this.player = player;
     this.renderer = renderer;
     this.entities = entities;
+
+    this.centsText = new Text({
+      renderer,
+      text: "¡Hello world!",
+      fontImage: "assets/font.png",
+      position: vec2(100, 100),
+      color: [0, 0.5, 1, 0.5],
+    })
+    this.centsText.isEnabled = false;
 
     this.initBuffers();
 
@@ -29,6 +40,7 @@ export class BoostHud {
       const mousePos = getMousePos(event.clientX, event.clientY, canvas, "world");
       if (mousePos.mag() < player.scale.x) {
         this.player.action.plannedBoost = this.clipPlannedBoost(mousePos);
+        this.updateCentsText();
       }
     });
 
@@ -37,6 +49,7 @@ export class BoostHud {
 
       const mousePos = getMousePos(event.clientX, event.clientY, canvas, "world");
       this.player.action.plannedBoost = this.clipPlannedBoost(mousePos);
+      this.updateCentsText();
     });
 
     canvas.addEventListener("mouseup", (event: MouseEvent) => {
@@ -44,6 +57,7 @@ export class BoostHud {
       this.player.velocity = this.screenToBoost(this.player.action.plannedBoost)
         .boost(this.player.velocity);
       this.player.action.plannedBoost = null;
+      this.updateCentsText();
     });
 
     canvas.addEventListener("tick", () => this.draw());
@@ -127,16 +141,21 @@ export class BoostHud {
 
       // Draw the player arrow last so it's easiest to see
       this.drawArrow(vec2(0, 0), screen, [0, 0.5, 1, 0.5]);
-      /*
-      // TODO: cents label
-      const cents = plannedBoost.space().mag() * 100;
-      const decimalPlaces = cents < 2 ? 1 : 0;
-      const textPos = screen.plus(screen.times(30 / screen.mag()));
-      this.ctx.fillStyle = "rgba(0, 127, 255, 0.5)";
-      this.ctx.font = "40px PressStart2P";
-      this.ctx.fillText(`${cents.toFixed(decimalPlaces)}¢`, width / 2 + textPos.x * C, height / 2 - textPos.y * C);
-      */
     }
+  }
+
+  private updateCentsText() {
+    const { plannedBoost: screen } = this.player.action;
+    this.centsText.isEnabled = (screen !== null);
+    if (screen === null) return;
+
+    const { width: w, height: h } = this.renderer.canvas;
+    const plannedBoost = this.screenToBoost(screen);
+    const cents = plannedBoost.space().mag() * 100 / C;
+    const decimalPlaces = cents < 2 ? 1 : 0;
+    const textPos = screen.plus(screen.times(30 / screen.mag()));
+    this.centsText.props.text = `${cents.toFixed(decimalPlaces)}¢`
+    this.centsText.props.position = vec2(w / 2 + textPos.x, h / 2 - textPos.y);
   }
 
   drawArrow(start: Vec2, end: Vec2, color: [number, number, number, number]) {

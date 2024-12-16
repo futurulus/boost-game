@@ -286,7 +286,7 @@ export class Renderer {
     this.running = false;
   }
 
-  loadTexture(url: string | null) {
+  loadTexture(url: string | null, image?: HTMLImageElement) {
     // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Using_textures_in_WebGL
     const gl = this.ctx;
 
@@ -324,8 +324,8 @@ export class Renderer {
 
     if (url === null) return texture;
 
-    const image = new Image();
-    image.onload = () => {
+    const texImage = image != null ? image : new Image();
+    texImage.onload = () => {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(
         gl.TEXTURE_2D,
@@ -333,12 +333,12 @@ export class Renderer {
         internalFormat,
         srcFormat,
         srcType,
-        image,
+        texImage,
       );
 
       gl.generateMipmap(gl.TEXTURE_2D);
     };
-    image.src = url;
+    texImage.src = url;
 
     return texture;
   }
