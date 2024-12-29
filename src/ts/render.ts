@@ -60,8 +60,6 @@ export class Renderer {
 
   private compileLightConeShader() {
     // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
-
-    // Vertex shader
     const gl = this.ctx;
     const vertexShaderSource = `#version 300 es
       uniform float sign;
@@ -131,7 +129,6 @@ export class Renderer {
   }
 
   private compileNowShader() {
-    // Vertex shader
     const gl = this.ctx;
     const vertexShaderSource = `#version 300 es
       uniform vec2 entityVelocity2;
@@ -195,7 +192,6 @@ export class Renderer {
   }
 
   private compileUIShader() {
-    // Vertex shader
     const gl = this.ctx;
     const vertexShaderSource = `#version 300 es
       uniform vec4 color;

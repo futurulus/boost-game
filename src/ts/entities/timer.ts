@@ -15,7 +15,7 @@ export class Timer extends Entity {
         this.pt = 0;
     }
 
-    protected draw() {
+    protected drawOld() {
         this.drawLocal(() => {
             const angleIn = (this.pt / (0.5 * INNER_ANGLE_PERIOD) % 1) * 2 * Math.PI;
             const counterclockwiseIn = (this.pt / INNER_ANGLE_PERIOD) % 1 > 0.5;

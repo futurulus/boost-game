@@ -7,6 +7,18 @@ import { LightConeUniforms } from "./render";
 
 const AXIS_SHRINK = 1e5;
 
+export interface Buffer {
+  buffer: WebGLBuffer;
+  numComponents: number;
+}
+
+export interface DrawCall {
+  offsetBuffer: Buffer;
+  colorBuffer: Buffer;
+  vertexCount: number;
+  mode: number;
+}
+
 export class Entity {
   readonly id: string;
   /**
@@ -33,8 +45,10 @@ export class Entity {
   protected canvas: HTMLCanvasElement;
   protected active: boolean;
 
-  protected positionBuffer: WebGLBuffer;
-  protected colorBuffer: WebGLBuffer;
+  protected drawCalls: DrawCall[] = [];
+
+  private defaultOffsetBuffer: Buffer;
+  private defaultColorBuffer: Buffer;
 
   constructor(game: Game, id: string) {
     this.game = game;
@@ -50,7 +64,7 @@ export class Entity {
     this._velocity = vec3(1, 0, 0);
     this.cachedPosition = {};
 
-    this.initBuffers();
+    this.initDrawCalls();
 
     window.requestAnimationFrame(() => {
       this.initialize();
@@ -136,6 +150,12 @@ export class Entity {
     return p;
   }
 
+  protected tick(tick: Tick): void {
+    if (this.active) {
+      this.move(tick.dt);
+    }
+  }
+
   protected move(dt: number): void {
     const { position: oldPosition, velocity } = this;
     const { player } = this.game;
@@ -150,42 +170,60 @@ export class Entity {
     }
   }
 
-  private initBuffers() {
+  protected buildBuffer(params: {data: number[][], name?: string, usage?: number}): Buffer {
+    const { data, name, usage } = params;
+
+    const numComponents = (data[0] ?? [0]).length;
+    const description = `${name ?? "buffer"}) in entity ${this.id}`;
+    if (!data.every((row) => row.length === numComponents)) {
+      throw `Invalid data for ${description}: inconsistent row lengths`;
+    }
+
     const gl = this.ctx;
+    const buffer = gl.createBuffer();
+    if (buffer === null) throw `Unable to create ${description}`;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.flat()), usage ?? gl.STATIC_DRAW);
+    return { buffer, numComponents };
+  }
 
-    const positionBuffer = gl.createBuffer();
-    if (positionBuffer === null) throw "Unable to create position buffer";
-    const colorBuffer = gl.createBuffer();
-    if (colorBuffer === null) throw "Unable to create color buffer";
-    this.positionBuffer = positionBuffer;
-    this.colorBuffer = colorBuffer;
+  protected initDrawCalls() {
+    this.defaultOffsetBuffer = this.buildBuffer({
+      data: [
+        [1, 0],    [0, .5],   [0, -.5],
+        [0, .5],   [-1, 1],   [-1, 0],
+        [0, -.5],  [-1, 0],   [-1, -1],
+        [-.5, 0],  [0, .5],   [-1, 0],
+        [-.5, 0],  [-1, 0],   [0, -.5],
+        [-.5, 0],  [0, -.5],  [0, .5],
+      ],
+      name: "defaultOffsetBuffer",
+    });
+    this.defaultColorBuffer = this.buildBuffer({
+      data: [
+        [0, 0, 1],  [1, 0, 1],  [0, 1, 1],
+        [1, 0, 1],  [1, 0, 0],  [1, 1, 0],
+        [0, 1, 1],  [1, 1, 0],  [0, 1, 0],
+        [1, 1, 1],  [1, 0, 1],  [1, 1, 0],
+        [1, 1, 1],  [1, 1, 0],  [0, 1, 1],
+        [1, 1, 1],  [0, 1, 1],  [1, 0, 1],
+      ],
+      name: "defaultColorBuffer",
+    });
 
-    const positions = [
-      1, 0,    0, .5,   0, -.5,
-      0, .5,   -1, 1,   -1, 0,
-      0, -.5,  -1, 0,   -1, -1,
-      -.5, 0,  0, .5,   -1, 0,
-      -.5, 0,  -1, 0,   0, -.5,
-      -.5, 0,  0, -.5,  0, .5,
-    ];
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    const colors = [
-      0, 0, 1,  1, 0, 1,  0, 1, 1,
-      1, 0, 1,  1, 0, 0,  1, 1, 0,
-      0, 1, 1,  1, 1, 0,  0, 1, 0,
-      1, 1, 1,  1, 0, 1,  1, 1, 0,
-      1, 1, 1,  1, 1, 0,  0, 1, 1,
-      1, 1, 1,  0, 1, 1,  1, 0, 1,
-    ];
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+    const gl = this.ctx;
+    this.drawCalls.push({
+      offsetBuffer: this.defaultOffsetBuffer,
+      colorBuffer: this.defaultColorBuffer,
+      vertexCount: 18,
+      mode: gl.TRIANGLES,
+    });
   }
 
   private onNextTick(event: TickEvent): void {
     if (event.detail !== undefined) {
       this.tick(event.detail);
-      this.drawReal();
+      this.draw();
     }
   }
 
@@ -201,9 +239,15 @@ export class Entity {
     return boostMatrix;
   }
 
-  protected draw(): void { }
+  /**
+   * @deprecated Entities don't directly draw themselves anymore. Implement
+   * initDrawCalls and (optionally) updateBuffers instead.
+   */
+  protected drawOld(): void { }
 
-  private drawReal(): void {
+  private draw(): void {
+    this.updateDrawCalls();
+
     const gl = this.ctx;
     const renderer = this.game.renderer;
 
@@ -282,16 +326,20 @@ export class Entity {
     }
     gl.uniformMatrix4fv(uniforms.viewScreenTransform, false, viewScreenTransform);
 
-    shader.attrib({key: "vertexOffset", buffer: this.positionBuffer, numComponents: 2});
-    shader.attrib({key: "vertexColor", buffer: this.colorBuffer, numComponents: 3});
-
-    const vertexCount = 18;
-    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
-  }
-
-  protected tick(tick: Tick): void {
-    if (this.active) {
-      this.move(tick.dt);
+    for (const drawCall of this.drawCalls) {
+      shader.attrib({key: "vertexOffset", ...drawCall.offsetBuffer});
+      shader.attrib({key: "vertexColor", ...drawCall.colorBuffer});
+      gl.drawArrays(drawCall.mode, 0, drawCall.vertexCount);
     }
   }
+
+  /**
+   * Override this method if you need to dynamically set drawing data (such as
+   * offsets or colors) for the entity in each frame.
+   *
+   * Buffers that don't change their data every frame should be set once in
+   * initDrawCalls. Consider using only gl.bufferData or similar to update
+   * buffers; avoid creating new buffers every frame if possible.
+   */
+  protected updateDrawCalls() { }
 }

@@ -332,7 +332,7 @@ export class Opponent extends Entity {
     });
   }
 
-  protected draw(): void {
+  protected drawOld(): void {
     this.drawLocal(() => {
       /*
       // body

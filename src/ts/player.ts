@@ -346,7 +346,7 @@ export class Player extends Entity {
     });
   }
 
-  protected draw(): void {
+  protected drawOld(): void {
     this.drawLocal(() => {
       /*
       // spaceship

@@ -9,7 +9,7 @@ export class ReturnWall extends Entity {
         super(game, id);
     }
 
-    protected draw() {
+    protected drawOld() {
         this.drawLocal(() => {
             /*
             this.ctx.beginPath();
