@@ -48,6 +48,11 @@ export function hexToRGB(hex: string): { r: number; g: number; b: number } {
   };
 }
 
+/** Modulo (num % denom), but returns positive numbers even if `num` is negative */
+export function positiveMod(num: number, denom: number): number {
+  return (num % denom) + (num >= 0 ? 0 : denom);
+}
+
 export function getVolume(): number {
   const volumeControl = document.getElementById("sound") as HTMLInputElement;
   return parseFloat(volumeControl.value);

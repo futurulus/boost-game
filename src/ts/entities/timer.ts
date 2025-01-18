@@ -1,12 +1,21 @@
 import { Buffer, Entity } from "../entity";
 import { Game } from "../main";
 import { vec2 } from "../types";
+import { positiveMod } from "../util";
 
-const INNER_RADIUS = 0.6;
-const INNER_ANGLE_PERIOD = 2;
-const INNER_HUE_PERIOD = 6;
-const OUTER_ANGLE_PERIOD = 60;
-const OUTER_HUE_PERIOD = 180;
+const SIZE = 20;
+const RADIUS_RATIO = 0.6;
+const INNER_TICK = 1;
+const OUTER_TICK = 10;
+
+const COLORS = [
+    [.5, 0., 0.],
+    [1., 1., 0.],
+    [0., .5, 0.],
+    [0., 1., 1.],
+    [0., 0., .5],
+    [1., 0., 1.],
+];
 
 export class Timer extends Entity {
     private offsetBuffer: Buffer;
@@ -14,69 +23,41 @@ export class Timer extends Entity {
 
     constructor(game: Game, id: string) {
         super(game, id);
-        this.scale = vec2(20, 20);
+        this.scale = vec2(SIZE, SIZE);
         this.pt = 0;
     }
 
     protected initDrawCalls() {
+        const rr = RADIUS_RATIO;
         this.offsetBuffer = this.buildBuffer({
             data: [
                 [0, 1],    [-1, 0],   [1, 0],
                 [1, 0],    [-1, 0],   [0, -1],
+                [0, rr],    [-rr, 0],   [rr, 0],
+                [rr, 0],    [-rr, 0],   [0, -rr],
             ],
             name: "offsetBuffer",
         });
         this.colorBuffer = this.buildBuffer({
-            data: [
-                [1, 0, 0],  [1, 0, 0],  [1, 0, 0],
-                [1, 0, 0],  [1, 0, 0],  [1, 0, 0],
-            ],
+            data: new Array(12).fill(COLORS[0]),
             name: "colorBuffer",
         });
 
-    const gl = this.ctx;
-    this.drawCalls.push({
-      offsetBuffer: this.offsetBuffer,
-      colorBuffer: this.colorBuffer,
-      vertexCount: 18,
-      mode: gl.TRIANGLES,
-    });
-  }
+        const gl = this.ctx;
+        this.drawCalls.push({
+            offsetBuffer: this.offsetBuffer,
+            colorBuffer: this.colorBuffer,
+            vertexCount: 12,
+            mode: gl.TRIANGLES,
+        });
+    }
 
-    protected drawOld() {
-        this.drawLocal(() => {
-            const angleIn = (this.pt / (0.5 * INNER_ANGLE_PERIOD) % 1) * 2 * Math.PI;
-            const counterclockwiseIn = (this.pt / INNER_ANGLE_PERIOD) % 1 > 0.5;
-            const hueIn = ((this.pt / INNER_HUE_PERIOD) % 1) * 360;
-            const angleOut = (this.pt / (0.5 * OUTER_ANGLE_PERIOD) % 1) * 2 * Math.PI;
-            const counterclockwiseOut = (this.pt / OUTER_ANGLE_PERIOD) % 1 > 0.5;
-            const hueOut = ((this.pt / OUTER_HUE_PERIOD) % 1) * 360;
-
-            /*
-            this.ctx.rotate(Math.PI / 2);
-
-            // Inner ticker
-            this.ctx.beginPath();
-            this.ctx.fillStyle = `hsl(${hueIn}deg, 100%, 50%)`;
-            this.ctx.moveTo(0, 0);
-            this.ctx.lineTo(INNER_RADIUS, 0);
-            this.ctx.arc(0, 0, INNER_RADIUS, 0, angleIn, counterclockwiseIn);
-            this.ctx.lineTo(0, 0);
-            this.ctx.closePath();
-            this.ctx.fill();
-
-            // Outer ticker
-            this.ctx.beginPath();
-            this.ctx.fillStyle = `hsl(${hueOut}deg, 100%, 50%)`;
-            this.ctx.moveTo(INNER_RADIUS, 0);
-            this.ctx.lineTo(1, 0);
-            this.ctx.arc(0, 0, 1, 0, angleOut, counterclockwiseOut);
-            this.ctx.lineTo(INNER_RADIUS * Math.cos(angleOut), INNER_RADIUS * Math.sin(angleOut));
-            this.ctx.arc(0, 0, INNER_RADIUS, angleOut, 0, !counterclockwiseOut);
-            this.ctx.lineTo(1, 0);
-            this.ctx.closePath();
-            this.ctx.fill();
-            */
-        })
+    protected updateDrawCalls() {
+        const innerColor = COLORS[Math.floor(positiveMod(this.pt / INNER_TICK, COLORS.length))];
+        const outerColor = COLORS[Math.floor(positiveMod(this.pt / OUTER_TICK, COLORS.length))];
+        this.setBufferData(
+            this.colorBuffer,
+            new Array(12).fill(0).map((_, i) => i < 6 ? outerColor : innerColor),
+        );
     }
 }
