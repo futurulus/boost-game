@@ -10,6 +10,8 @@ const AXIS_SHRINK = 1e5;
 export interface Buffer {
   buffer: WebGLBuffer;
   numComponents: number;
+  name: string;
+  usage: number;
 }
 
 export interface DrawCall {
@@ -170,21 +172,53 @@ export class Entity {
     }
   }
 
-  protected buildBuffer(params: {data: number[][], name?: string, usage?: number}): Buffer {
+  /**
+   * Creates a buffer (array of data points, e.g. vertex positions) for use in an OpenGL draw call.
+   *
+   * @param data Array of equal-length arrays, each inner array representing a data vector
+   * @param name A human-readable name for the buffer, used for debugging
+   * @param usage One of the OpenGL buffer usage hints, for optimization (default: gl.STATIC_DRAW)
+   * 
+   * @returns A structure representing an OpenGL buffer with information on how to use it
+   */
+  protected buildBuffer(params: {
+    data: number[][],
+    name: string,
+    usage?: number,
+  }): Buffer {
     const { data, name, usage } = params;
+    const description = `${name ?? "buffer"}) in entity ${this.id}`;
+    const gl = this.ctx;
+    const glBuffer = gl.createBuffer();
+    if (glBuffer === null) throw `Unable to create ${description}`;
+
+    const buffer: Buffer = { buffer: glBuffer, numComponents: 0, name, usage: usage ?? gl.STATIC_DRAW };
+    this.setBufferData(buffer, data);
+    return buffer;
+  }
+  
+  /**
+   * Sets the data for a buffer in OpenGL.
+   * 
+   * @param buffer Buffer structure summarizing the OpenGL buffer.
+   * `buffer.numComponents` is updated in-place to reflect the length of the
+   * inner arrays of `data`.
+   * @param data New array of equal-length arrays, each inner array representing a data vector
+   */
+  protected setBufferData(buffer: Buffer, data: number[][]): void {
+    const { buffer: glBuffer, name, usage } = buffer;
+    const description = `${name ?? "buffer"}) in entity ${this.id}`;
 
     const numComponents = (data[0] ?? [0]).length;
-    const description = `${name ?? "buffer"}) in entity ${this.id}`;
     if (!data.every((row) => row.length === numComponents)) {
       throw `Invalid data for ${description}: inconsistent row lengths`;
     }
 
     const gl = this.ctx;
-    const buffer = gl.createBuffer();
-    if (buffer === null) throw `Unable to create ${description}`;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.flat()), usage ?? gl.STATIC_DRAW);
-    return { buffer, numComponents };
+    gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.flat()), usage);
+
+    buffer.numComponents = numComponents;
   }
 
   protected initDrawCalls() {
@@ -338,7 +372,7 @@ export class Entity {
    * offsets or colors) for the entity in each frame.
    *
    * Buffers that don't change their data every frame should be set once in
-   * initDrawCalls. Consider using only gl.bufferData or similar to update
+   * initDrawCalls. Consider using only this.updateBuffer or similar to update
    * buffers; avoid creating new buffers every frame if possible.
    */
   protected updateDrawCalls() { }

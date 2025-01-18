@@ -1,4 +1,4 @@
-import { Entity } from "../entity";
+import { Buffer, Entity } from "../entity";
 import { Game } from "../main";
 import { vec2 } from "../types";
 
@@ -9,11 +9,39 @@ const OUTER_ANGLE_PERIOD = 60;
 const OUTER_HUE_PERIOD = 180;
 
 export class Timer extends Entity {
+    private offsetBuffer: Buffer;
+    private colorBuffer: Buffer;
+
     constructor(game: Game, id: string) {
         super(game, id);
         this.scale = vec2(20, 20);
         this.pt = 0;
     }
+
+    protected initDrawCalls() {
+        this.offsetBuffer = this.buildBuffer({
+            data: [
+                [0, 1],    [-1, 0],   [1, 0],
+                [1, 0],    [-1, 0],   [0, -1],
+            ],
+            name: "offsetBuffer",
+        });
+        this.colorBuffer = this.buildBuffer({
+            data: [
+                [1, 0, 0],  [1, 0, 0],  [1, 0, 0],
+                [1, 0, 0],  [1, 0, 0],  [1, 0, 0],
+            ],
+            name: "colorBuffer",
+        });
+
+    const gl = this.ctx;
+    this.drawCalls.push({
+      offsetBuffer: this.offsetBuffer,
+      colorBuffer: this.colorBuffer,
+      vertexCount: 18,
+      mode: gl.TRIANGLES,
+    });
+  }
 
     protected drawOld() {
         this.drawLocal(() => {
