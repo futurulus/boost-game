@@ -8,7 +8,8 @@ const RADIUS_RATIO = 0.6;
 const INNER_TICK = 1;
 const OUTER_TICK = 10;
 
-const COLORS = [
+type Color3 = [number, number, number];
+const INNER_COLORS: Color3[] = [
     [.5, 0., 0.],
     [1., 1., 0.],
     [0., .5, 0.],
@@ -16,6 +17,18 @@ const COLORS = [
     [0., 0., .5],
     [1., 0., 1.],
 ];
+const OUTER_COLORS: Color3[] = [
+    [1., 0., 0.],
+    [1., 1., 0.],
+    [0., 1., 0.],
+    [0., 1., 1.],
+    [0., 0., 1.],
+    [1., 0., 1.],
+];
+
+const interpolateColor = (c1: Color3, c2: Color3, f: number) => c1.map((x, i) =>
+    (1 - f) * x + f * c2[i]
+);
 
 export class Timer extends Entity {
     private offsetBuffer: Buffer;
@@ -39,7 +52,7 @@ export class Timer extends Entity {
             name: "offsetBuffer",
         });
         this.colorBuffer = this.buildBuffer({
-            data: new Array(12).fill(COLORS[0]),
+            data: new Array(12).fill(OUTER_COLORS[0]),
             name: "colorBuffer",
         });
 
@@ -53,8 +66,12 @@ export class Timer extends Entity {
     }
 
     protected updateDrawCalls() {
-        const innerColor = COLORS[Math.floor(positiveMod(this.pt / INNER_TICK, COLORS.length))];
-        const outerColor = COLORS[Math.floor(positiveMod(this.pt / OUTER_TICK, COLORS.length))];
+        const innerColor = INNER_COLORS[Math.floor(positiveMod(this.pt / INNER_TICK, INNER_COLORS.length))];
+        const outerPhase = positiveMod(this.pt / OUTER_TICK, OUTER_COLORS.length);
+        const outerStartIndex = Math.floor(outerPhase);
+        const outerColor1 = OUTER_COLORS[outerStartIndex];
+        const outerColor2 = OUTER_COLORS[(outerStartIndex + 1) % OUTER_COLORS.length];
+        const outerColor = interpolateColor(outerColor1, outerColor2, outerPhase - outerStartIndex)
         this.setBufferData(
             this.colorBuffer,
             new Array(12).fill(0).map((_, i) => i < 6 ? outerColor : innerColor),
