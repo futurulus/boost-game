@@ -1,4 +1,3 @@
-import { Countdown } from "./countdown";
 import { Obstacle } from "./obstacle";
 import { Player } from "./player";
 import { Renderer } from "./render";
@@ -20,7 +19,6 @@ export class Game {
   opponent: Opponent;
   entities: Entity[];
   gamepadAdapter: GamepadAdapter;
-  countdown: Countdown;
   gui: Gui;
   renderer: Renderer;
 
@@ -53,46 +51,40 @@ export class Game {
 
     this.gamepadAdapter = new GamepadAdapter(canvas);
 
-    this.countdown = new Countdown(this.renderer);
     this.gui = new Gui(this, 2);
 
     this.renderer.start();
 
     this.manageState();
-    this.start();
   }
 
   manageState() {
     const { canvas } = this.renderer;
 
-    canvas.addEventListener("countdown", ((e: FinishEvent) => {
+    canvas.addEventListener("pause", ((e: FinishEvent) => {
       if (typeof e.detail?.winner === "number") {
         this.gui.incrementScore(e.detail.winner);
       }
 
-      this.startCountdown(e.detail?.winner);
-      this.togglePlayers(false);
+      this.toggleActive(false);
+      this.reset();
     }) as EventListener);
 
     canvas.addEventListener("play", () => {
-      this.togglePlayers(true);
+      this.toggleActive(true);
     });
   }
 
-  startCountdown(winner?: number) {
-    this.countdown.startTimer(winner);
-  }
-
-  togglePlayers(active: boolean) {
-    this.player.setActive(active);
+  toggleActive(active: boolean) {
     this.entities.forEach((entity) => {
       entity.setActive(active);
     });
   }
 
-  start() {
-    const startEvent: FinishEvent = new Event("countdown");
-    this.renderer.canvas.dispatchEvent(startEvent);
+  reset() {
+    this.entities.forEach((entity) => {
+      entity.reset();
+    });
   }
 }
 

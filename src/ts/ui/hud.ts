@@ -58,6 +58,9 @@ export class BoostHud {
         .boost(this.player.velocity);
       this.player.action.plannedBoost = null;
       this.updateCentsText();
+      if (!this.player.isActive) {
+        this.renderer.canvas.dispatchEvent(new Event("play"));
+      }
     });
 
     canvas.addEventListener("tick", () => this.draw());

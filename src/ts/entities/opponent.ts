@@ -180,11 +180,6 @@ export class Opponent extends Entity {
     }
   }
 
-  public setActive(active: boolean): void {
-    this.reset();
-    super.setActive(active);
-  }
-
   private collide(): void {
     const thisObstacle = this.obstacle;
     if (thisObstacle === undefined) return;
@@ -323,50 +318,12 @@ export class Opponent extends Entity {
     }, this.cooldownDuration);
   }
 
-  private reset(): void {
+  public reset(): void {
     this.position = vec3(0, 0.25, 0.25);
     this.velocity = vec3(1, 0, 0);
     this.move(0);
     window.requestAnimationFrame(() => {
       this.turn();
-    });
-  }
-
-  protected drawOld(): void {
-    this.drawLocal(() => {
-      /*
-      // body
-      const opponentColor = "#d3b447";
-      this.ctx.shadowColor = opponentColor;
-      this.ctx.shadowBlur = 10;
-      this.ctx.fillStyle = opponentColor;
-      this.ctx.fillRect(-1, -1, 2, 2);
-
-      // face
-      this.ctx.shadowColor = "#ff00ff";
-      this.ctx.shadowBlur = 8;
-      this.ctx.fillStyle = "#ff00ff";
-      this.ctx.fillRect(0.8, -1, 0.2, 2);
-
-      // window
-      this.ctx.shadowBlur = 0;
-      this.ctx.fillStyle = "black";
-      this.ctx.moveTo(0.4, 0);
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, 0.4, 0, 2 * Math.PI);
-      this.ctx.fill();
-
-      if (this.action.attacking && this.active) {
-        // weapon
-        this.ctx.fillStyle = "#ff0000";
-        this.ctx.beginPath();
-        this.ctx.moveTo(-1, -1);
-        this.ctx.lineTo(1 + this.range, -1);
-        this.ctx.lineTo(1 + this.range, 1);
-        this.ctx.lineTo(-1, 1);
-        this.ctx.fill();
-      }
-      */
     });
   }
 

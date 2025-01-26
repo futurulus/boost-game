@@ -83,6 +83,8 @@ export class Entity {
     this.active = active;
   }
 
+  public reset(): void { }
+
   protected getObstacleRectangle(): Rectangle | undefined {
     return undefined;
   }
@@ -178,7 +180,7 @@ export class Entity {
    * @param data Array of equal-length arrays, each inner array representing a data vector
    * @param name A human-readable name for the buffer, used for debugging
    * @param usage One of the OpenGL buffer usage hints, for optimization (default: gl.STATIC_DRAW)
-   * 
+   *
    * @returns A structure representing an OpenGL buffer with information on how to use it
    */
   protected buildBuffer(params: {
@@ -196,10 +198,10 @@ export class Entity {
     this.setBufferData(buffer, data);
     return buffer;
   }
-  
+
   /**
    * Sets the data for a buffer in OpenGL.
-   * 
+   *
    * @param buffer Buffer structure summarizing the OpenGL buffer.
    * `buffer.numComponents` is updated in-place to reflect the length of the
    * inner arrays of `data`.
@@ -272,12 +274,6 @@ export class Entity {
     );
     return boostMatrix;
   }
-
-  /**
-   * @deprecated Entities don't directly draw themselves anymore. Implement
-   * initDrawCalls and (optionally) updateBuffers instead.
-   */
-  protected drawOld(): void { }
 
   private draw(): void {
     this.updateDrawCalls();

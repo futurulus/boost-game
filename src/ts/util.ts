@@ -1,4 +1,4 @@
-import { Rectangle } from "./types";
+import { Rectangle, vec2 } from "./types";
 
 export function rotate(
   object: Rectangle,
@@ -12,22 +12,22 @@ export function rotate(
   };
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
-  const rotatedA = {
-    x: (a.x - center.x) * cos - (a.y - center.y) * sin + center.x,
-    y: (a.x - center.x) * sin + (a.y - center.y) * cos + center.y,
-  };
-  const rotatedB = {
-    x: (b.x - center.x) * cos - (b.y - center.y) * sin + center.x,
-    y: (b.x - center.x) * sin + (b.y - center.y) * cos + center.y,
-  };
-  const rotatedC = {
-    x: (c.x - center.x) * cos - (c.y - center.y) * sin + center.x,
-    y: (c.x - center.x) * sin + (c.y - center.y) * cos + center.y,
-  };
-  const rotatedD = {
-    x: (d.x - center.x) * cos - (d.y - center.y) * sin + center.x,
-    y: (d.x - center.x) * sin + (d.y - center.y) * cos + center.y,
-  };
+  const rotatedA = vec2(
+    (a.x - center.x) * cos - (a.y - center.y) * sin + center.x,
+    (a.x - center.x) * sin + (a.y - center.y) * cos + center.y,
+  );
+  const rotatedB = vec2(
+    (b.x - center.x) * cos - (b.y - center.y) * sin + center.x,
+    (b.x - center.x) * sin + (b.y - center.y) * cos + center.y,
+  );
+  const rotatedC = vec2(
+    (c.x - center.x) * cos - (c.y - center.y) * sin + center.x,
+    (c.x - center.x) * sin + (c.y - center.y) * cos + center.y,
+  );
+  const rotatedD = vec2(
+    (d.x - center.x) * cos - (d.y - center.y) * sin + center.x,
+    (d.x - center.x) * sin + (d.y - center.y) * cos + center.y,
+  );
 
   // todo: offset doesnt work properly yet
 

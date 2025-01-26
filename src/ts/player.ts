@@ -32,6 +32,7 @@ export class Player extends Entity {
   constructor(game: Game) {
     super(game, 'player');
     this.position = vec3(0, 0, 0);
+    this.velocity = vec3(1, 0, 0);
     this.scale = vec2(100, 50);
     this.acceleration = 2000.0;
     this.range = 1.5;
@@ -188,9 +189,8 @@ export class Player extends Entity {
     }
   }
 
-  public setActive(active: boolean): void {
-    this.reset();
-    super.setActive(active);
+  get isActive(): boolean {
+    return this.active;
   }
 
   private collide(): void {
@@ -337,45 +337,12 @@ export class Player extends Entity {
     }, this.cooldownDuration);
   }
 
-  private reset(): void {
+  public reset(): void {
     this.position = vec3(0, 0, 0);
     this.velocity = vec3(1, 0, 0);
     this.move(0);
     window.requestAnimationFrame(() => {
       this.turn();
-    });
-  }
-
-  protected drawOld(): void {
-    this.drawLocal(() => {
-      /*
-      // spaceship
-      const playerColor = '#368dc8';
-      this.ctx.shadowColor = playerColor;
-      this.ctx.shadowBlur = 10;
-      this.ctx.fillStyle = playerColor;
-      this.ctx.moveTo(-0.2, 0);
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, 0.2, Math.PI, 3 * Math.PI);
-      this.ctx.lineTo(-0.5, 0);
-      this.ctx.lineTo(-1, 0.5);
-      this.ctx.lineTo(1, 0);
-      this.ctx.lineTo(-1, -0.5);
-      this.ctx.lineTo(-0.5, 0);
-      this.ctx.closePath();
-      this.ctx.fill("evenodd");
-
-      if (this.action.attacking && this.active) {
-        // weapon
-        this.ctx.fillStyle = "#ff0000";
-        this.ctx.beginPath();
-        this.ctx.moveTo(-1, -1);
-        this.ctx.lineTo(1 + this.range, -1);
-        this.ctx.lineTo(1 + this.range, 1);
-        this.ctx.lineTo(-1, 1);
-        this.ctx.fill();
-      }
-      */
     });
   }
 
