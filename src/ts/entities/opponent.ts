@@ -328,6 +328,7 @@ export class Opponent extends Entity {
   }
 
   protected initialize(): void {
+    super.initialize();
     this.turn();
   }
 

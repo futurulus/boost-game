@@ -347,6 +347,7 @@ export class Player extends Entity {
   }
 
   protected initialize(): void {
+    super.initialize();
     this.turn();
   }
 

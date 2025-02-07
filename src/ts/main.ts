@@ -10,7 +10,7 @@ import { FinishEvent, vec2, vec3 } from "./types";
 import { Entity } from "./entity";
 import { Opponent } from "./entities/opponent";
 import { Timer } from "./entities/timer";
-import { ReturnWall } from "./entities/returnWall";
+import { ReturnWall, ReflectWall } from "./entities/wall";
 
 export class Game {
   collider: Collider2d;
@@ -36,11 +36,13 @@ export class Game {
     this.player = new Player(this);
     this.opponent = new Opponent(this, 'player2');
 
-    for (let x = -250; x <= 250; x += 100) {
-      const topWall = new ReturnWall(this, 'topWall');
-      topWall.position = vec3(0, x, 800);
-      topWall.scale = vec2(100, 5);
-    }
+    const topWall = new ReturnWall(this, 'topWall');
+    topWall.position = vec3(0, 0, 800);
+    topWall.scale = vec2(600, 5);
+
+    const bottomWall = new ReflectWall(this, 'bottomWall');
+    bottomWall.position = vec3(0, 0, -800);
+    bottomWall.scale = vec2(600, 5);
 
     for (let x = -600; x <= 600; x += 400) {
       for (let y = -600; y <= 600; y += 400) {

@@ -66,8 +66,6 @@ export class Entity {
     this._velocity = vec3(1, 0, 0);
     this.cachedPosition = {};
 
-    this.initDrawCalls();
-
     window.requestAnimationFrame(() => {
       this.initialize();
     });
@@ -96,6 +94,7 @@ export class Entity {
     }
 
     this.move(0);
+    this.initDrawCalls();
   }
 
   /**
