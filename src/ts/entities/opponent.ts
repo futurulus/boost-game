@@ -46,15 +46,6 @@ export class Opponent extends Entity {
     this.registerControls();
   }
 
-  protected getObstacleRectangle(): Rectangle {
-    return rotate({
-      a: vec2(this.position.x - this.scale.x, this.position.y - this.scale.y),
-      b: vec2(this.position.x + this.scale.x, this.position.y - this.scale.y),
-      c: vec2(this.position.x + this.scale.x, this.position.y + this.scale.y),
-      d: vec2(this.position.x - this.scale.x, this.position.y + this.scale.y),
-    }, this.orientation);
-  }
-
   private registerControls(): void {
     // move left
     const playerNum = 1;
@@ -261,20 +252,13 @@ export class Opponent extends Entity {
 
   private strike(): void {
     const { collider, player } = this.game;
-    const otherPlayer = player.obstacle?.getObject();
-    if (otherPlayer === undefined) return;
+    const otherPlayerPolygon = player.obstacle?.getObject();
+    if (otherPlayerPolygon === undefined) return;
 
     const blocked = player.action.blocking;
     if (blocked) {
       return;
     }
-
-    const otherPlayerPolygon = new Polygon(new Vector(0, 0), [
-      new Vector(otherPlayer.a.x, otherPlayer.a.y),
-      new Vector(otherPlayer.b.x, otherPlayer.b.y),
-      new Vector(otherPlayer.c.x, otherPlayer.c.y),
-      new Vector(otherPlayer.d.x, otherPlayer.d.y),
-    ]);
 
     const weaponPosition = this.getWeaponPosition();
     const weaponPolygon = new Polygon(new Vector(0, 0), [

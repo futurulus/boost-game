@@ -1,3 +1,4 @@
+import { Polygon } from "collider2d";
 import { Buffer, Entity } from "../entity";
 import { Game } from "../main";
 import { Rectangle, vec2 } from "../types";
@@ -40,7 +41,7 @@ export class Timer extends Entity {
         this.pt = 0;
     }
 
-    protected getObstacleRectangle(): Rectangle | undefined {
+    protected getObstaclePolygon() {
         return undefined;
     }
 

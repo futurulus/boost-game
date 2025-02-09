@@ -271,20 +271,13 @@ export class Player extends Entity {
   private strike(): void {
     const { collider, entities } = this.game;
     const opponent = entities[0] as Opponent;
-    const otherPlayer = opponent.obstacle?.getObject();
-    if (otherPlayer === undefined) return;
+    const otherPlayerPolygon = opponent.obstacle?.getObject();
+    if (otherPlayerPolygon === undefined) return;
 
     const blocked = opponent.action.blocking;
     if (blocked) {
       return;
     }
-
-    const otherPlayerPolygon = new Polygon(new Vector(0, 0), [
-      new Vector(otherPlayer.a.x, otherPlayer.a.y),
-      new Vector(otherPlayer.b.x, otherPlayer.b.y),
-      new Vector(otherPlayer.c.x, otherPlayer.c.y),
-      new Vector(otherPlayer.d.x, otherPlayer.d.y),
-    ]);
 
     const weaponPosition = this.getWeaponPosition();
     const weaponPolygon = new Polygon(new Vector(0, 0), [

@@ -1,10 +1,10 @@
+import { Vector, Polygon } from "collider2d";
 import { mat4 } from "gl-matrix";
 import { lightConeIntersection, nowIntersection } from "./geometry";
 import { Game } from "./main";
 import { Obstacle } from "./obstacle";
 import { C, C_INV_SQ, Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
 import { LightConeUniforms } from "./render";
-import { rotate } from "./util";
 
 const AXIS_SHRINK = 1e5;
 
@@ -84,19 +84,19 @@ export class Entity {
 
   public reset(): void { }
 
-  protected getObstacleRectangle(): Rectangle | undefined {
-    return rotate({
-      a: vec2(this.position.x - this.scale.x, this.position.y - this.scale.y),
-      b: vec2(this.position.x + this.scale.x, this.position.y - this.scale.y),
-      c: vec2(this.position.x + this.scale.x, this.position.y + this.scale.y),
-      d: vec2(this.position.x - this.scale.x, this.position.y + this.scale.y),
-    }, this.orientation);
+  protected getObstaclePolygon(): Polygon | undefined {
+    return new Polygon(new Vector(0, 0), [
+      new Vector(this.position.x - this.scale.x, this.position.y - this.scale.y),
+      new Vector(this.position.x + this.scale.x, this.position.y - this.scale.y),
+      new Vector(this.position.x + this.scale.x, this.position.y + this.scale.y),
+      new Vector(this.position.x - this.scale.x, this.position.y + this.scale.y),
+    ]).rotate(this.orientation);
   }
 
   protected initialize(): void {
-    const obstacleRect = this.getObstacleRectangle();
-    if (obstacleRect !== undefined) {
-      this.obstacle = new Obstacle(this.game.collider, this.game.obstacles, this.id, obstacleRect);
+    const obstaclePoly = this.getObstaclePolygon();
+    if (obstaclePoly !== undefined) {
+      this.obstacle = new Obstacle(this.game.collider, this.game.obstacles, this.id, obstaclePoly);
     }
 
     this.move(0);
@@ -172,9 +172,9 @@ export class Entity {
     this.pt += (this.position.t - oldPosition.t) / velocity.t;
 
     if (this.obstacle !== undefined) {
-      const newObstacleRect = this.getObstacleRectangle();
-      if (newObstacleRect !== undefined) {
-        this.obstacle?.editObstacle(newObstacleRect);
+      const newObstaclePoly = this.getObstaclePolygon();
+      if (newObstaclePoly !== undefined) {
+        this.obstacle?.editObstacle(newObstaclePoly);
       }
     }
   }
