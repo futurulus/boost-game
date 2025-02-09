@@ -1,6 +1,6 @@
 import { Buffer, Entity } from "../entity";
 import { Game } from "../main";
-import { vec2 } from "../types";
+import { Rectangle, vec2 } from "../types";
 import { positiveMod } from "../util";
 
 const SIZE = 20;
@@ -38,6 +38,10 @@ export class Timer extends Entity {
         super(game, id);
         this.scale = vec2(SIZE, SIZE);
         this.pt = 0;
+    }
+
+    protected getObstacleRectangle(): Rectangle | undefined {
+        return undefined;
     }
 
     protected initDrawCalls() {

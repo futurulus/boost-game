@@ -54,15 +54,6 @@ export class Player extends Entity {
     this.registerControls();
   }
 
-  protected getObstacleRectangle(): Rectangle {
-    return rotate({
-      a: vec2(this.position.x - this.scale.x, this.position.y - this.scale.y),
-      b: vec2(this.position.x + this.scale.x, this.position.y - this.scale.y),
-      c: vec2(this.position.x + this.scale.x, this.position.y + this.scale.y),
-      d: vec2(this.position.x - this.scale.x, this.position.y + this.scale.y),
-    }, this.orientation);
-  }
-
   private registerControls(): void {
     // move left
     const playerNum = 0;

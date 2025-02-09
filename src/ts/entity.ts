@@ -4,6 +4,7 @@ import { Game } from "./main";
 import { Obstacle } from "./obstacle";
 import { C, C_INV_SQ, Rectangle, Tick, TickEvent, vec2, Vec2, vec3, Vec3 } from "./types";
 import { LightConeUniforms } from "./render";
+import { rotate } from "./util";
 
 const AXIS_SHRINK = 1e5;
 
@@ -84,7 +85,12 @@ export class Entity {
   public reset(): void { }
 
   protected getObstacleRectangle(): Rectangle | undefined {
-    return undefined;
+    return rotate({
+      a: vec2(this.position.x - this.scale.x, this.position.y - this.scale.y),
+      b: vec2(this.position.x + this.scale.x, this.position.y - this.scale.y),
+      c: vec2(this.position.x + this.scale.x, this.position.y + this.scale.y),
+      d: vec2(this.position.x - this.scale.x, this.position.y + this.scale.y),
+    }, this.orientation);
   }
 
   protected initialize(): void {
