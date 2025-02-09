@@ -224,6 +224,11 @@ export class Player extends Entity {
     this.position = this.position.plus(this.velocity.times(dt));
     this.pt += dt;
 
+    const newObstaclePoly = this.getObstaclePolygon();
+    if (newObstaclePoly !== undefined) {
+      this.obstacle?.editObstacle(newObstaclePoly);
+    }
+
     this.timer.position = this.position;
     this.timer.velocity = this.velocity;
     this.timer.pt = this.pt;
